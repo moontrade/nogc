@@ -33,14 +33,14 @@ func main() {
 	println("ART")
 	tree, _ := art.New()
 	////println("tree", uint(uintptr(unsafe.Pointer(tree))))
-	key := memory.WrapString("hello")
-	value := memory.WrapString("world!")
+	key := nogc.WrapString("hello")
+	value := nogc.WrapString("world!")
 	existing := tree.Insert(key.Pointer, key.Len(), value.Pointer)
 	println("existing", uint(uintptr(existing.Unsafe())))
-	existing = tree.InsertBytes(key, memory.WrapString("world 2!").Pointer)
-	println("existing", memory.BytesRef(existing).String())
+	existing = tree.InsertBytes(key, nogc.WrapString("world 2!").Pointer)
+	println("existing", nogc.BytesRef(existing).String())
 	existing = tree.FindBytes(key)
-	println("found", memory.BytesRef(existing).String())
+	println("found", nogc.BytesRef(existing).String())
 	tree.Free()
 	println("ART size", tree.Size())
 	println("ART done")
@@ -70,7 +70,7 @@ func benchmarkCGO(iterations int) {
 
 func benchmarkARTInsert(iterations int) {
 	tree, _ := art.New()
-	key := memory.AllocBytes(8)
+	key := nogc.AllocBytes(8)
 
 	start := time.Now().UnixNano()
 	for i := 0; i < iterations; i++ {
@@ -97,7 +97,7 @@ func benchmarkARTInsert(iterations int) {
 
 func benchmarkGoMapInsert(iterations int) {
 	mp := make(map[string]struct{})
-	key := memory.AllocBytes(8)
+	key := nogc.AllocBytes(8)
 
 	start := time.Now().UnixNano()
 	for i := 0; i < iterations; i++ {
@@ -124,12 +124,12 @@ func benchmarkGoMapInsert(iterations int) {
 
 func benchmarkRHMapInsert(iterations int) {
 	mp := rhmap.NewMap(uintptr(iterations * 2))
-	key := memory.AllocBytes(8)
+	key := nogc.AllocBytes(8)
 
 	start := time.Now().UnixNano()
 	for i := 0; i < iterations; i++ {
 		key.SetInt64BE(0, int64(i))
-		mp.Set(key, memory.Bytes{0})
+		mp.Set(key, nogc.Bytes{0})
 	}
 	end := time.Now().UnixNano() - start
 	//println(float64(end)/float64(iterations))

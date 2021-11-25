@@ -3,7 +3,7 @@ package queue
 import "github.com/moontrade/nogc"
 
 type Task struct {
-	Data memory.Bytes
+	Data nogc.Bytes
 	next uintptr
 }
 

@@ -1,4 +1,4 @@
-package memory
+package nogc
 
 //func TestPointerBE(t *testing.T) {
 //	a := NewTLSF(1)

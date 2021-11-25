@@ -10,10 +10,10 @@ import (
 func TestNew(t *testing.T) {
 	println("sizeof Leaf", unsafe.Sizeof(Leaf{}))
 	art, _ := New()
-	art.InsertBytes(memory.WrapString("hello"), 1000)
-	art.InsertBytes(memory.WrapString("below"), 5000)
+	art.InsertBytes(nogc.WrapString("hello"), 1000)
+	art.InsertBytes(nogc.WrapString("below"), 5000)
 	art.InsertString("hello01", 8700)
-	found := art.FindBytes(memory.WrapString("hello"))
+	found := art.FindBytes(nogc.WrapString("hello"))
 	println("found", uint(found))
 	println("size", art.Size())
 	min := art.Minimum()
@@ -26,7 +26,7 @@ func TestNew(t *testing.T) {
 func BenchmarkTree_Insert(b *testing.B) {
 	b.Run("insert int32BE", func(b *testing.B) {
 		tree, _ := New()
-		key := memory.AllocBytes(4)
+		key := nogc.AllocBytes(4)
 
 		//println(tree.String())
 		b.ResetTimer()
@@ -41,7 +41,7 @@ func BenchmarkTree_Insert(b *testing.B) {
 	})
 	b.Run("insert int32LE", func(b *testing.B) {
 		tree, _ := New()
-		key := memory.AllocBytes(4)
+		key := nogc.AllocBytes(4)
 
 		//println(tree.String())
 		b.ResetTimer()
@@ -56,7 +56,7 @@ func BenchmarkTree_Insert(b *testing.B) {
 	})
 	b.Run("insert int64BE", func(b *testing.B) {
 		tree, _ := New()
-		key := memory.AllocBytes(8)
+		key := nogc.AllocBytes(8)
 
 		//println(tree.String())
 		b.ResetTimer()
@@ -71,7 +71,7 @@ func BenchmarkTree_Insert(b *testing.B) {
 	})
 	b.Run("insert int64LE", func(b *testing.B) {
 		tree, _ := New()
-		key := memory.AllocBytes(8)
+		key := nogc.AllocBytes(8)
 
 		//println(tree.String())
 		b.ResetTimer()
@@ -85,8 +85,8 @@ func BenchmarkTree_Insert(b *testing.B) {
 		key.Free()
 	})
 	b.Run("insert int64 PointerSet", func(b *testing.B) {
-		m := memory.NewPointerSet(uintptr(b.N * 2))
-		key := memory.AllocBytes(8)
+		m := nogc.NewPointerSet(uintptr(b.N * 2))
+		key := nogc.AllocBytes(8)
 
 		//println(tree.String())
 		b.ResetTimer()
@@ -101,7 +101,7 @@ func BenchmarkTree_Insert(b *testing.B) {
 	})
 	b.Run("insert int64 gomap", func(b *testing.B) {
 		m := make(map[int64]struct{}, b.N*2)
-		key := memory.AllocBytes(8)
+		key := nogc.AllocBytes(8)
 
 		//println(tree.String())
 		b.ResetTimer()
@@ -118,7 +118,7 @@ func BenchmarkTree_Find(b *testing.B) {
 	runInt64BE := func(entries int) {
 		tree, _ := New()
 		defer tree.Free()
-		key := memory.AllocBytes(8)
+		key := nogc.AllocBytes(8)
 		defer key.Free()
 
 		for i := 0; i < entries; i++ {

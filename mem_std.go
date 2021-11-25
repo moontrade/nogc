@@ -1,7 +1,7 @@
 //go:build !tinygo && !wasm && !wasi && !tinygo.wasm
 // +build !tinygo,!wasm,!wasi,!tinygo.wasm
 
-package memory
+package nogc
 
 import (
 	"reflect"

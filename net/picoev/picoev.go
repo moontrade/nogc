@@ -138,8 +138,8 @@ type Loop C.picoev_loop
 type Conn struct {
 	FD    int32
 	_     int32
-	Read  memory.FatPointer
-	Write memory.FatPointer
+	Read  nogc.FatPointer
+	Write nogc.FatPointer
 }
 
 var (

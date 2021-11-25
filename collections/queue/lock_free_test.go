@@ -10,10 +10,10 @@ import (
 
 func TestLockFreeQueue(t *testing.T) {
 	const taskNum = 50000000
-	memory.AllocZeroed(24)
+	nogc.AllocZeroed(24)
 	q := AllocLockFreeQueue()
 
-	b := memory.AllocBytes(24)
+	b := nogc.AllocBytes(24)
 	b.Free()
 
 	var wg sync.WaitGroup
@@ -23,7 +23,7 @@ func TestLockFreeQueue(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for i := 0; i < taskNum/goroutines; i++ {
-				task := memory.AllocBytes(24)
+				task := nogc.AllocBytes(24)
 				q.Enqueue(task)
 			}
 		}()
@@ -53,7 +53,7 @@ func TestLockFreeQueue(t *testing.T) {
 
 func Benchmark(b *testing.B) {
 	b.Run("queue", func(b *testing.B) {
-		value := memory.WrapString("hello")
+		value := nogc.WrapString("hello")
 		q := AllocLockFreeQueue()
 		wg := &sync.WaitGroup{}
 		startWg := &sync.WaitGroup{}
@@ -78,7 +78,7 @@ func Benchmark(b *testing.B) {
 			defer runtime.UnlockOSThread()
 			startWg.Wait()
 			count := 0
-			var v memory.Bytes
+			var v nogc.Bytes
 			for {
 				if count >= b.N {
 					break
@@ -95,12 +95,12 @@ func Benchmark(b *testing.B) {
 	})
 
 	b.Run("chan buf 1", func(b *testing.B) {
-		value := memory.WrapString("hello")
+		value := nogc.WrapString("hello")
 		wg := &sync.WaitGroup{}
 		startWg := &sync.WaitGroup{}
 		startWg.Add(1)
 
-		ch := make(chan memory.Bytes, 64)
+		ch := make(chan nogc.Bytes, 64)
 		defer close(ch)
 
 		wg.Add(1)
@@ -118,7 +118,7 @@ func Benchmark(b *testing.B) {
 			defer wg.Done()
 			startWg.Wait()
 			count := 0
-			var v memory.Bytes
+			var v nogc.Bytes
 			for {
 				if count >= b.N {
 					break

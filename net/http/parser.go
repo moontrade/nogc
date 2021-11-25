@@ -72,7 +72,7 @@ func AllocRequest(headers int) *Request {
 	if headers > 4096 {
 		headers = 4096
 	}
-	p := memory.AllocZeroed(unsafe.Sizeof(Request{}) + (unsafe.Sizeof(Header{}) * uintptr(headers)))
+	p := nogc.AllocZeroed(unsafe.Sizeof(Request{}) + (unsafe.Sizeof(Header{}) * uintptr(headers)))
 	r := (*Request)(unsafe.Pointer(p))
 	r.headers = uintptr(p.Add(int(unsafe.Sizeof(Request{}))))
 	r.numHeaders = uintptr(headers)
@@ -81,7 +81,7 @@ func AllocRequest(headers int) *Request {
 }
 
 func (p *Request) Free() {
-	memory.Free(memory.Pointer(unsafe.Pointer(p)))
+	nogc.Free(nogc.Pointer(unsafe.Pointer(p)))
 }
 
 func (p *Request) Method() string {
@@ -106,8 +106,8 @@ func (p *Request) Header(index int) *Header {
 }
 
 type Header struct {
-	Name  memory.FatPointer
-	Value memory.FatPointer
+	Name  nogc.FatPointer
+	Value nogc.FatPointer
 }
 
 //func printSizeOfs() {

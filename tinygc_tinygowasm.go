@@ -1,7 +1,7 @@
 //go:build gc.provided && tinygo && tinygo.wasm
 // +build gc.provided,tinygo,tinygo.wasm
 
-package memory
+package nogc
 
 import (
 	"unsafe"

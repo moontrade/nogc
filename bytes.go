@@ -1,7 +1,8 @@
-package memory
+package nogc
 
 import (
 	"github.com/moontrade/nogc/hash"
+	"strconv"
 	"unsafe"
 )
 
@@ -307,19 +308,17 @@ func (s *Bytes) EnsureLen(neededLen int) {
 
 // EnsureCap ensures the capacity is at least neededCap in size
 //goland:noinspection GoVetUnsafePointer
-func (s *Bytes) EnsureCap(neededCap int) bool {
+func (s *Bytes) EnsureCap(neededCap int) {
 	cp := s.Cap()
 	if cp >= neededCap {
-		return true
+		return
 	}
 	newCap := neededCap - cp
 	addr := Realloc(s.allocationPointer(), uintptr(newCap))
-	//addr := ((*Allocator)(unsafe.Pointer(p.alloc))).Realloc(p.Pointer, Pointer(newCap))
 	if addr == 0 {
-		return false
+		panic(ErrOutOfMemory)
 	}
 	*s = Bytes{addr}
-	return true
 }
 
 // Clone creates a copy of this instance of Bytes
@@ -393,6 +392,16 @@ func (s *Bytes) AppendInt(value int) {
 	s.Pointer.SetInt(s.ensureAppend(int(unsafe.Sizeof(int(0)))), value)
 }
 
+func (s *Bytes) AppendIntString(value int) {
+	s.appendInt(21, int64(value), 10)
+}
+
+func (s *Bytes) appendInt(maxLength int, value int64, base int) {
+	l := s.Len()
+	s.EnsureCap(l + maxLength)
+	s.setLen(l + len(strconv.AppendInt(s.Pointer.Bytes(l, maxLength, maxLength), value, base)))
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // UInt
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -410,6 +419,16 @@ func (s *Bytes) SetUInt(offset int, value uint) {
 //goland:noinspection GoVetUnsafePointer
 func (s *Bytes) AppendUInt(value uint) {
 	s.Pointer.SetUInt(s.ensureAppend(int(unsafe.Sizeof(uint(0)))), value)
+}
+
+func (s *Bytes) AppendUIntString(value uint) {
+	s.appendUInt(20, uint64(value), 10)
+}
+
+func (s *Bytes) appendUInt(maxLength int, value uint64, base int) {
+	l := s.Len()
+	s.EnsureCap(l + maxLength)
+	s.setLen(l + len(strconv.AppendUint(s.Pointer.Bytes(l, maxLength, maxLength), value, base)))
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -466,6 +485,10 @@ func (s *Bytes) AppendInt8(value int8) {
 	s.Pointer.SetInt8(s.ensureAppend(1), value)
 }
 
+func (s *Bytes) AppendInt8String(value int8) {
+	s.appendInt(4, int64(value), 10)
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // UInt8
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -483,6 +506,10 @@ func (s *Bytes) SetUInt8(offset int, value uint8) {
 
 func (s *Bytes) AppendUInt8(value uint8) {
 	s.Pointer.SetUInt8(s.ensureAppend(1), value)
+}
+
+func (s *Bytes) AppendUInt8String(value uint8) {
+	s.appendUInt(3, uint64(value), 10)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -503,6 +530,10 @@ func (s *Bytes) AppendByte(value byte) {
 	s.Pointer.SetByte(s.ensureAppend(1), value)
 }
 
+func (s *Bytes) AppendByteString(value byte) {
+	s.appendInt(3, int64(value), 10)
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Int16 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -519,6 +550,10 @@ func (s *Bytes) SetInt16(offset int, value int16) {
 
 func (s *Bytes) AppendInt16(value int16) {
 	s.Pointer.SetInt16(s.ensureAppend(2), value)
+}
+
+func (s *Bytes) AppendInt16String(value int16) {
+	s.appendInt(6, int64(value), 10)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -575,6 +610,10 @@ func (s *Bytes) AppendUInt16(value uint16) {
 	s.Pointer.SetUInt16(s.ensureAppend(2), value)
 }
 
+func (s *Bytes) AppendUInt16String(value uint16) {
+	s.appendUInt(5, uint64(value), 10)
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // UInt16 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -627,6 +666,10 @@ func (s *Bytes) SetInt32(offset int, value int32) {
 
 func (s *Bytes) AppendInt32(value int32) {
 	s.Pointer.SetInt32(s.ensureAppend(4), value)
+}
+
+func (s *Bytes) AppendInt32String(value int32) {
+	s.appendInt(11, int64(value), 10)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -683,6 +726,10 @@ func (s *Bytes) AppendUInt32(value uint32) {
 	s.Pointer.SetUInt32(s.ensureAppend(4), value)
 }
 
+func (s *Bytes) AppendUInt32String(value uint32) {
+	s.appendUInt(10, uint64(value), 10)
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // UInt32 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -737,6 +784,10 @@ func (s *Bytes) AppendInt64(value int64) {
 	s.Pointer.SetInt64(s.ensureAppend(8), value)
 }
 
+func (s *Bytes) AppendInt64String(value int64) {
+	s.appendInt(21, value, 10)
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Int64 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -789,6 +840,10 @@ func (s *Bytes) SetUInt64(offset int, value uint64) {
 
 func (s *Bytes) AppendUInt64(value uint64) {
 	s.Pointer.SetUInt64(s.ensureAppend(8), value)
+}
+
+func (s *Bytes) AppendUInt64String(value uint64) {
+	s.appendUInt(20, value, 10)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

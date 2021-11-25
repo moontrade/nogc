@@ -1,4 +1,4 @@
-package memory
+package nogc
 
 // divOrZero safely divides a by b or returns zero if either are zero
 func divOrZero(a, b int64) int64 {

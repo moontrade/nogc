@@ -19,12 +19,12 @@ type Tree C.art_tree
 
 type Leaf C.art_leaf
 
-func (l *Leaf) Data() memory.Pointer {
-	return *(*memory.Pointer)(unsafe.Pointer(l))
+func (l *Leaf) Data() nogc.Pointer {
+	return *(*nogc.Pointer)(unsafe.Pointer(l))
 }
-func (l *Leaf) Key() memory.FatPointer {
-	return memory.FatPointerOf(
-		memory.Pointer(uintptr(unsafe.Pointer(l))+unsafe.Sizeof(uintptr(0))+4),
+func (l *Leaf) Key() nogc.FatPointer {
+	return nogc.FatPointerOf(
+		nogc.Pointer(uintptr(unsafe.Pointer(l))+unsafe.Sizeof(uintptr(0))+4),
 		uintptr(*(*uint32)(unsafe.Pointer(uintptr(unsafe.Pointer(l)) + unsafe.Sizeof(uintptr(0))))))
 }
 
@@ -55,72 +55,72 @@ type _bytes struct {
 
 //go:nosplit
 //go:noescape
-func (t *Tree) Insert(key memory.Pointer, size int, value memory.Pointer) memory.Pointer {
-	return memory.Pointer(C.art_insert((*C.art_tree)(t), (*C.uchar)(unsafe.Pointer(key)), C.int(size), unsafe.Pointer(value)))
+func (t *Tree) Insert(key nogc.Pointer, size int, value nogc.Pointer) nogc.Pointer {
+	return nogc.Pointer(C.art_insert((*C.art_tree)(t), (*C.uchar)(unsafe.Pointer(key)), C.int(size), unsafe.Pointer(value)))
 }
 
-func (t *Tree) InsertBytes(key memory.Bytes, value memory.Pointer) memory.Pointer {
+func (t *Tree) InsertBytes(key nogc.Bytes, value nogc.Pointer) nogc.Pointer {
 	return t.Insert(key.Pointer, key.Len(), value)
 }
 
-func (t *Tree) InsertString(key string, value memory.Pointer) memory.Pointer {
+func (t *Tree) InsertString(key string, value nogc.Pointer) nogc.Pointer {
 	k := (*_string)(unsafe.Pointer(&key))
-	return t.Insert(memory.Pointer(k.Data), int(k.Len), value)
+	return t.Insert(nogc.Pointer(k.Data), int(k.Len), value)
 }
 
-func (t *Tree) InsertSlice(key []byte, value memory.Pointer) memory.Pointer {
+func (t *Tree) InsertSlice(key []byte, value nogc.Pointer) nogc.Pointer {
 	k := (*_bytes)(unsafe.Pointer(&key))
-	return t.Insert(memory.Pointer(k.Data), int(k.Len), value)
+	return t.Insert(nogc.Pointer(k.Data), int(k.Len), value)
 }
 
 //go:nosplit
 //go:noescape
-func (t *Tree) InsertNoReplace(key memory.Pointer, size int, value memory.Pointer) memory.Pointer {
-	return memory.Pointer(C.art_insert_no_replace((*C.art_tree)(t), (*C.uchar)(unsafe.Pointer(key)), C.int(size), unsafe.Pointer(value)))
+func (t *Tree) InsertNoReplace(key nogc.Pointer, size int, value nogc.Pointer) nogc.Pointer {
+	return nogc.Pointer(C.art_insert_no_replace((*C.art_tree)(t), (*C.uchar)(unsafe.Pointer(key)), C.int(size), unsafe.Pointer(value)))
 }
 
-func (t *Tree) InsertNoReplaceBytes(key memory.Bytes, value memory.Pointer) memory.Pointer {
+func (t *Tree) InsertNoReplaceBytes(key nogc.Bytes, value nogc.Pointer) nogc.Pointer {
 	return t.InsertNoReplace(key.Pointer, key.Len(), value)
 }
 
-func (t *Tree) InsertNoReplaceString(key string, value memory.Pointer) memory.Pointer {
+func (t *Tree) InsertNoReplaceString(key string, value nogc.Pointer) nogc.Pointer {
 	k := (*_string)(unsafe.Pointer(&key))
-	return t.InsertNoReplace(memory.Pointer(k.Data), int(k.Len), value)
+	return t.InsertNoReplace(nogc.Pointer(k.Data), int(k.Len), value)
 }
 
-func (t *Tree) InsertNoReplaceSlice(key []byte, value memory.Pointer) memory.Pointer {
+func (t *Tree) InsertNoReplaceSlice(key []byte, value nogc.Pointer) nogc.Pointer {
 	k := (*_bytes)(unsafe.Pointer(&key))
-	return t.InsertNoReplace(memory.Pointer(k.Data), int(k.Len), value)
+	return t.InsertNoReplace(nogc.Pointer(k.Data), int(k.Len), value)
 }
 
 //go:nosplit
 //go:noescape
-func (t *Tree) Delete(key memory.Pointer, size int) memory.Pointer {
-	return memory.Pointer(C.art_delete((*C.art_tree)(t), (*C.uchar)(unsafe.Pointer(key)), C.int(size)))
+func (t *Tree) Delete(key nogc.Pointer, size int) nogc.Pointer {
+	return nogc.Pointer(C.art_delete((*C.art_tree)(t), (*C.uchar)(unsafe.Pointer(key)), C.int(size)))
 }
 
-func (t *Tree) DeleteBytes(key memory.Bytes) memory.Pointer {
+func (t *Tree) DeleteBytes(key nogc.Bytes) nogc.Pointer {
 	return t.Delete(key.Pointer, key.Len())
 }
 
 //go:nosplit
 //go:noescape
-func (t *Tree) Find(key memory.Pointer, size int) memory.Pointer {
-	return memory.Pointer(C.art_search((*C.art_tree)(t), (*C.uchar)(unsafe.Pointer(key)), C.int(size)))
+func (t *Tree) Find(key nogc.Pointer, size int) nogc.Pointer {
+	return nogc.Pointer(C.art_search((*C.art_tree)(t), (*C.uchar)(unsafe.Pointer(key)), C.int(size)))
 }
 
-func (t *Tree) FindBytes(key memory.Bytes) memory.Pointer {
+func (t *Tree) FindBytes(key nogc.Bytes) nogc.Pointer {
 	return t.Find(key.Pointer, key.Len())
 }
 
 //go:nosplit
 //go:noescape
-func (t *Tree) Minimum() memory.Pointer {
-	return memory.Pointer(unsafe.Pointer(C.art_minimum((*C.art_tree)(t))))
+func (t *Tree) Minimum() nogc.Pointer {
+	return nogc.Pointer(unsafe.Pointer(C.art_minimum((*C.art_tree)(t))))
 }
 
 //go:nosplit
 //go:noescape
-func (t *Tree) Maximum() memory.Pointer {
-	return memory.Pointer(unsafe.Pointer(C.art_maximum((*C.art_tree)(t))))
+func (t *Tree) Maximum() nogc.Pointer {
+	return nogc.Pointer(unsafe.Pointer(C.art_maximum((*C.art_tree)(t))))
 }

@@ -1,7 +1,7 @@
 //go:build tinygo && tinygo.wasm
 // +build tinygo,tinygo.wasm
 
-package memory
+package nogc
 
 import (
 	"github.com/moontrade/nogc/alloc/tlsf"

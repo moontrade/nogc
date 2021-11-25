@@ -276,7 +276,7 @@ func randomRange(min, max int) int {
 
 func BenchmarkAllocator_Alloc(b *testing.B) {
 	var (
-		min, max    = 36, 1024
+		min, max    = 36, 8092
 		runTLSF     = true
 		showGCStats = false
 	)

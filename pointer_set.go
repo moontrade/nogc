@@ -1,4 +1,4 @@
-package memory
+package nogc
 
 import (
 	"github.com/moontrade/nogc/hash"

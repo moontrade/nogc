@@ -17,16 +17,16 @@ type LockFree struct {
 }
 
 type lockFreeNode struct {
-	value memory.Bytes
+	value nogc.Bytes
 	next  uintptr
 }
 
 //goland:noinspection GoVetUnsafePointer
 func AllocLockFreeQueue() *LockFree {
-	q := (*LockFree)(unsafe.Pointer(memory.Alloc(unsafe.Sizeof(LockFree{}))))
-	n := memory.Alloc(unsafe.Sizeof(lockFreeNode{}))
+	q := (*LockFree)(unsafe.Pointer(nogc.Alloc(unsafe.Sizeof(LockFree{}))))
+	n := nogc.Alloc(unsafe.Sizeof(lockFreeNode{}))
 	node := (*lockFreeNode)(unsafe.Pointer(n))
-	node.value = memory.Bytes{}
+	node.value = nogc.Bytes{}
 	node.next = 0
 	q.head = uintptr(n)
 	q.tail = uintptr(n)
@@ -35,13 +35,13 @@ func AllocLockFreeQueue() *LockFree {
 }
 
 func (l *LockFree) Free() {
-	memory.Free(memory.Pointer(unsafe.Pointer(l)))
+	nogc.Free(nogc.Pointer(unsafe.Pointer(l)))
 }
 
 // Enqueue puts the given value v at the tail of the queue.
 //goland:noinspection GoVetUnsafePointer
-func (q *LockFree) Enqueue(task memory.Bytes) {
-	n := uintptr(memory.Alloc(unsafe.Sizeof(lockFreeNode{})))
+func (q *LockFree) Enqueue(task nogc.Bytes) {
+	n := uintptr(nogc.Alloc(unsafe.Sizeof(lockFreeNode{})))
 	node := (*lockFreeNode)(unsafe.Pointer(n))
 	node.value = task
 	node.next = 0
@@ -70,7 +70,7 @@ retry:
 // Dequeue removes and returns the value at the head of the queue.
 // It returns nil if the queue is empty.
 //goland:noinspection GoVetUnsafePointer
-func (q *LockFree) Dequeue() memory.Bytes {
+func (q *LockFree) Dequeue() nogc.Bytes {
 retry:
 	first := atomic.LoadUintptr(&q.head)
 	firstV := (*lockFreeNode)(unsafe.Pointer(first))
@@ -83,7 +83,7 @@ retry:
 			// Is queue empty?
 			if next == 0 {
 				//println("empty")
-				return memory.Bytes{}
+				return nogc.Bytes{}
 			}
 			//println("first == tail")
 			atomic.CompareAndSwapUintptr(&q.tail, last, next) // tail is falling behind, try to advance it.
@@ -92,7 +92,7 @@ retry:
 			task := (*lockFreeNode)(unsafe.Pointer(next)).value
 			if atomic.CompareAndSwapUintptr(&q.head, first, next) { // dequeue is done, return value.
 				atomic.AddInt32(&q.length, -1)
-				memory.Free(memory.Pointer(first))
+				nogc.Free(nogc.Pointer(first))
 				return task
 			}
 		}

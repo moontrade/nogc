@@ -105,12 +105,12 @@ type Tree C.art_tree
 
 type Leaf C.art_leaf
 
-func (l *Leaf) Data() memory.Pointer {
-	return *(*memory.Pointer)(unsafe.Pointer(l))
+func (l *Leaf) Data() nogc.Pointer {
+	return *(*nogc.Pointer)(unsafe.Pointer(l))
 }
-func (l *Leaf) Key() memory.FatPointer {
-	return memory.FatPointerOf(
-		memory.Pointer(uintptr(unsafe.Pointer(l))+unsafe.Sizeof(uintptr(0))+4),
+func (l *Leaf) Key() nogc.FatPointer {
+	return nogc.FatPointerOf(
+		nogc.Pointer(uintptr(unsafe.Pointer(l))+unsafe.Sizeof(uintptr(0))+4),
 		uintptr(*(*uint32)(unsafe.Pointer(uintptr(unsafe.Pointer(l)) + unsafe.Sizeof(uintptr(0))))))
 }
 
@@ -159,7 +159,7 @@ type artInsertT struct {
 	old   uintptr
 }
 
-func (r *Tree) Insert(key memory.Pointer, size int, value memory.Pointer) memory.Pointer {
+func (r *Tree) Insert(key nogc.Pointer, size int, value nogc.Pointer) nogc.Pointer {
 	args := artInsertT{
 		tree:  uintptr(unsafe.Pointer(r)),
 		key:   uintptr(key),
@@ -168,24 +168,24 @@ func (r *Tree) Insert(key memory.Pointer, size int, value memory.Pointer) memory
 	}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_art_insert), ptr, 0)
-	return memory.Pointer(args.old)
+	return nogc.Pointer(args.old)
 }
 
-func (r *Tree) InsertBytes(key memory.Bytes, value memory.Pointer) memory.Pointer {
+func (r *Tree) InsertBytes(key nogc.Bytes, value nogc.Pointer) nogc.Pointer {
 	return r.Insert(key.Pointer, key.Len(), value)
 }
 
-func (r *Tree) InsertString(key string, value memory.Pointer) memory.Pointer {
+func (r *Tree) InsertString(key string, value nogc.Pointer) nogc.Pointer {
 	k := (*reflect.StringHeader)(unsafe.Pointer(&key))
-	return r.Insert(memory.Pointer(k.Data), int(k.Len), value)
+	return r.Insert(nogc.Pointer(k.Data), int(k.Len), value)
 }
 
-func (r *Tree) InsertSlice(key []byte, value memory.Pointer) memory.Pointer {
+func (r *Tree) InsertSlice(key []byte, value nogc.Pointer) nogc.Pointer {
 	k := (*reflect.SliceHeader)(unsafe.Pointer(&key))
-	return r.Insert(memory.Pointer(k.Data), int(k.Len), value)
+	return r.Insert(nogc.Pointer(k.Data), int(k.Len), value)
 }
 
-func (r *Tree) InsertNoReplace(key memory.Pointer, size int, value memory.Pointer) memory.Pointer {
+func (r *Tree) InsertNoReplace(key nogc.Pointer, size int, value nogc.Pointer) nogc.Pointer {
 	args := artInsertT{
 		tree:  uintptr(unsafe.Pointer(r)),
 		key:   uintptr(key),
@@ -194,21 +194,21 @@ func (r *Tree) InsertNoReplace(key memory.Pointer, size int, value memory.Pointe
 	}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_art_insert_no_replace), ptr, 0)
-	return memory.Pointer(args.old)
+	return nogc.Pointer(args.old)
 }
 
-func (r *Tree) InsertNoReplaceBytes(key memory.Bytes, value memory.Pointer) memory.Pointer {
+func (r *Tree) InsertNoReplaceBytes(key nogc.Bytes, value nogc.Pointer) nogc.Pointer {
 	return r.InsertNoReplace(key.Pointer, key.Len(), value)
 }
 
-func (r *Tree) InsertNoReplaceString(key string, value memory.Pointer) memory.Pointer {
+func (r *Tree) InsertNoReplaceString(key string, value nogc.Pointer) nogc.Pointer {
 	k := (*reflect.StringHeader)(unsafe.Pointer(&key))
-	return r.InsertNoReplace(memory.Pointer(k.Data), int(k.Len), value)
+	return r.InsertNoReplace(nogc.Pointer(k.Data), int(k.Len), value)
 }
 
-func (r *Tree) InsertNoReplaceSlice(key []byte, value memory.Pointer) memory.Pointer {
+func (r *Tree) InsertNoReplaceSlice(key []byte, value nogc.Pointer) nogc.Pointer {
 	k := (*reflect.SliceHeader)(unsafe.Pointer(&key))
-	return r.InsertNoReplace(memory.Pointer(k.Data), int(k.Len), value)
+	return r.InsertNoReplace(nogc.Pointer(k.Data), int(k.Len), value)
 }
 
 type artDeleteT struct {
@@ -218,7 +218,7 @@ type artDeleteT struct {
 	item uintptr
 }
 
-func (r *Tree) Delete(key memory.Pointer, size int) memory.Pointer {
+func (r *Tree) Delete(key nogc.Pointer, size int) nogc.Pointer {
 	args := artDeleteT{
 		tree: uintptr(unsafe.Pointer(r)),
 		key:  uintptr(key),
@@ -226,10 +226,10 @@ func (r *Tree) Delete(key memory.Pointer, size int) memory.Pointer {
 	}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_art_delete), ptr, 0)
-	return memory.Pointer(args.item)
+	return nogc.Pointer(args.item)
 }
 
-func (r *Tree) DeleteBytes(key memory.Bytes) memory.Pointer {
+func (r *Tree) DeleteBytes(key nogc.Bytes) nogc.Pointer {
 	return r.Delete(key.Pointer, key.Len())
 }
 
@@ -240,7 +240,7 @@ type artSearchT struct {
 	result uintptr
 }
 
-func (r *Tree) Find(key memory.Pointer, size int) memory.Pointer {
+func (r *Tree) Find(key nogc.Pointer, size int) nogc.Pointer {
 	args := artSearchT{
 		tree: uintptr(unsafe.Pointer(r)),
 		s:    uintptr(key),
@@ -248,10 +248,10 @@ func (r *Tree) Find(key memory.Pointer, size int) memory.Pointer {
 	}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_art_search), ptr, 0)
-	return memory.Pointer(args.result)
+	return nogc.Pointer(args.result)
 }
 
-func (r *Tree) FindBytes(key memory.Bytes) memory.Pointer {
+func (r *Tree) FindBytes(key nogc.Bytes) nogc.Pointer {
 	return r.Find(key.Pointer, key.Len())
 }
 

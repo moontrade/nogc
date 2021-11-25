@@ -1,7 +1,7 @@
 //go:build !gc.conservative && !gc.extalloc
 // +build !gc.conservative,!gc.extalloc
 
-package memory
+package nogc
 
 import (
 	"time"

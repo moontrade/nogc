@@ -4,7 +4,7 @@
 // +build darwin linux,!baremetal,!wasi freebsd,!baremetal
 // +build !nintendoswitch
 
-package memory
+package nogc
 
 import (
 	"github.com/moontrade/nogc/alloc/rpmalloc"

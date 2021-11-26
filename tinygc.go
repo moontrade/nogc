@@ -427,7 +427,7 @@ func (gc *gc) Collect() {
 				println("GC sweep", uint(k), "size", uint(obj.size()))
 			}
 
-			println("GC sweep", uint(uintptr(k)+gc_TotalOverhead), "size", uint(obj.size()), "rtSize", obj.rtSize)
+			//println("GC sweep", uint(uintptr(k)+gc_TotalOverhead), "size", uint(obj.size()), "rtSize", obj.rtSize)
 
 			// Free memory
 			Free(Pointer(k))

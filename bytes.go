@@ -900,6 +900,12 @@ func (s *Bytes) AppendFloat32(value float32) {
 	s.Pointer.SetFloat32(s.ensureAppend(4), value)
 }
 
+func (s *Bytes) AppendFloat32String(value float32) {
+	l := s.Len()
+	s.EnsureCap(20)
+	s.setLen(l + len(strconv.AppendFloat(s.Pointer.Bytes(l, 20, 20), float64(value), 'g', -1, 32)))
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 // Float32 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -952,6 +958,12 @@ func (s *Bytes) SetFloat64(offset int, value float64) {
 
 func (s *Bytes) AppendFloat64(value float64) {
 	s.Pointer.SetFloat64(s.ensureAppend(8), value)
+}
+
+func (s *Bytes) AppendFloat64String(value float64) {
+	l := s.Len()
+	s.EnsureCap(20)
+	s.setLen(l + len(strconv.AppendFloat(s.Pointer.Bytes(l, 20, 20), value, 'g', -1, 64)))
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////

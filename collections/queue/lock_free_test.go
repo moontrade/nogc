@@ -53,7 +53,7 @@ func TestLockFreeQueue(t *testing.T) {
 
 func Benchmark(b *testing.B) {
 	b.Run("queue", func(b *testing.B) {
-		value := nogc.WrapString("hello")
+		value := nogc.BytesOfString("hello")
 		q := AllocLockFreeQueue()
 		wg := &sync.WaitGroup{}
 		startWg := &sync.WaitGroup{}
@@ -95,7 +95,7 @@ func Benchmark(b *testing.B) {
 	})
 
 	b.Run("chan buf 1", func(b *testing.B) {
-		value := nogc.WrapString("hello")
+		value := nogc.BytesOfString("hello")
 		wg := &sync.WaitGroup{}
 		startWg := &sync.WaitGroup{}
 		startWg.Add(1)

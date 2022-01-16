@@ -1,10 +1,13 @@
-#include <stdint.h>
 #ifndef ART_H
 #define ART_H
+
+#include "lock.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdint.h>
 
 #define NODE4   1
 #define NODE16  2
@@ -24,7 +27,33 @@ extern "C" {
 # endif
 #endif
 
-typedef int(*art_callback)(void *data, const unsigned char *key, uint32_t key_len, void *value);
+struct art_lock_api;
+extern const struct art_lock_api art_lock_api_unfair;
+extern const struct art_lock_api art_lock_api_fair;
+
+typedef struct art_value {
+    union {
+	    void* value;
+	    uint64_t uvalue;
+	};
+} art_value;
+
+typedef struct art_search_result {
+    art_value value;
+    size_t found;
+} art_search_result;
+
+static const art_value ART_NULL_VALUE = {
+    .value=0
+};
+
+static const art_search_result ART_NOT_FOUND = {
+    .found=0
+};
+
+//#define ART_NULL_VALUE {.file=0,.offset=0,.value=NULL}
+
+typedef int(*art_callback)(void *data, const unsigned char *key, uint32_t key_len, art_value value);
 
 /**
  * This struct is included as part
@@ -78,7 +107,7 @@ typedef struct {
  * of arbitrary size, as they include the key.
  */
 typedef struct {
-    void *value;
+    art_value value;
     uint32_t key_len;
     unsigned char key[0];
 } art_leaf;
@@ -86,9 +115,14 @@ typedef struct {
 /**
  * Main struct, points to root.
  */
-typedef struct {
+typedef struct art_tree {
     art_node *root;
     uint64_t size;
+    uint64_t memory;
+    int32_t free;
+    int32_t fair;
+    void* lock;
+    uint32_t lock_;
 } art_tree;
 
 /**
@@ -98,24 +132,16 @@ typedef struct {
 int art_tree_init(art_tree *t);
 
 /**
- * DEPRECATED
- * Initializes an ART tree
- * @return 0 on success.
+ * Initializes a lock for an ART tree.
+ * Access to the tree will become thread-safe.
  */
-#define init_art_tree(...) art_tree_init(__VA_ARGS__)
+void art_tree_init_lock(art_tree *t);
 
 /**
  * Destroys an ART tree
  * @return 0 on success.
  */
 int art_tree_destroy(art_tree *t);
-
-/**
- * DEPRECATED
- * Initializes an ART tree
- * @return 0 on success.
- */
-#define destroy_art_tree(...) art_tree_destroy(__VA_ARGS__)
 
 /**
  * Returns the size of the ART tree.
@@ -128,6 +154,8 @@ inline uint64_t art_size(art_tree *t) {
 }
 #endif
 
+void art_sleep(uint64_t nanos);
+
 /**
  * inserts a new value into the art tree
  * @arg t the tree
@@ -137,7 +165,9 @@ inline uint64_t art_size(art_tree *t) {
  * @return null if the item was newly inserted, otherwise
  * the old value pointer is returned.
  */
-void* art_insert(art_tree *t, const unsigned char *key, int key_len, void *value);
+art_value art_insert(art_tree *t, const unsigned char *key, int key_len, art_value value);
+
+art_search_result art_insert_value(art_tree *t, const unsigned char *key, int key_len, art_value value);
 
 /**
  * inserts a new value into the art tree (not replacing)
@@ -148,7 +178,9 @@ void* art_insert(art_tree *t, const unsigned char *key, int key_len, void *value
  * @return null if the item was newly inserted, otherwise
  * the old value pointer is returned.
  */
-void* art_insert_no_replace(art_tree *t, const unsigned char *key, int key_len, void *value);
+art_value art_insert_no_replace(art_tree *t, const unsigned char *key, int key_len, art_value value);
+
+art_search_result art_insert_no_replace_value(art_tree *t, const unsigned char *key, int key_len, art_value value);
 
 /**
  * Deletes a value from the ART tree
@@ -158,7 +190,9 @@ void* art_insert_no_replace(art_tree *t, const unsigned char *key, int key_len, 
  * @return NULL if the item was not found, otherwise
  * the value pointer is returned.
  */
-void* art_delete(art_tree *t, const unsigned char *key, int key_len);
+art_value art_delete(art_tree *t, const unsigned char *key, int key_len);
+
+art_search_result art_delete_value(art_tree *t, const unsigned char *key, int key_len);
 
 /**
  * Searches for a value in the ART tree
@@ -168,7 +202,7 @@ void* art_delete(art_tree *t, const unsigned char *key, int key_len);
  * @return NULL if the item was not found, otherwise
  * the value pointer is returned.
  */
-void* art_search(const art_tree *t, const unsigned char *key, int key_len);
+art_search_result art_search(const art_tree *t, const unsigned char *key, int key_len);
 
 /**
  * Returns the minimum valued leaf

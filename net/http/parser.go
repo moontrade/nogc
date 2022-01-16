@@ -1,4 +1,4 @@
-package http
+package httpparser
 
 /*
 #include "picohttpparser.h"

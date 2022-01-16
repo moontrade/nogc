@@ -51,7 +51,7 @@ func TestGC(t *testing.T) {
 //	m[1000] = struct{}{}
 //	a := NewTLSFArena(1, NewSliceArena(), GrowMin)
 //	set := NewPointerSet(a.AsAllocator(), 16)
-//	set.Set(1000)
+//	set.Put(1000)
 //	s := &set
 //
 //	b.Run("map get exists", func(b *testing.B) {
@@ -83,7 +83,7 @@ func TestGC(t *testing.T) {
 //	})
 //	b.Run("moon Add", func(b *testing.B) {
 //		for i := 0; i < b.N; i++ {
-//			_, _ = s.Set(1001)
+//			_, _ = s.Put(1001)
 //		}
 //	})
 //
@@ -102,7 +102,7 @@ func TestGC(t *testing.T) {
 //func BenchmarkHashSetHashAlgos(b *testing.B) {
 //	a := NewTLSFArena(1, NewSliceArena(), GrowMin)
 //	set := NewPointerSet(a.AsAllocator(), 16)
-//	set.Set(1000)
+//	set.Put(1000)
 //	s := &set
 //
 //	get := func(name string, algo func(uint32) uint32) {
@@ -126,7 +126,7 @@ func TestGC(t *testing.T) {
 //		b.Run(name+" Add", func(b *testing.B) {
 //			pointerSetHash = algo
 //			for i := 0; i < b.N; i++ {
-//				_, _ = s.Set(1001)
+//				_, _ = s.Put(1001)
 //			}
 //		})
 //	}
@@ -239,7 +239,7 @@ func TestGC(t *testing.T) {
 //				if set.isCollision(nextPtr) {
 //					collisions++
 //				}
-//				set.Set(nextPtr)
+//				set.Put(nextPtr)
 //			}
 //			nextPtr += Pointer(size)
 //		}

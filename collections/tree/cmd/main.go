@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"github.com/moontrade/nogc"
 	"github.com/moontrade/nogc/alloc/rpmalloc"
-	"github.com/moontrade/nogc/collections/art"
 	"github.com/moontrade/nogc/collections/rhmap"
+	"github.com/moontrade/nogc/collections/tree"
 	"strconv"
 	"time"
 )
@@ -31,13 +31,13 @@ func main() {
 	}
 
 	println("ART")
-	tree, _ := art.New()
+	tree, _ := tree.New()
 	////println("tree", uint(uintptr(unsafe.Pointer(tree))))
-	key := nogc.WrapString("hello")
-	value := nogc.WrapString("world!")
+	key := nogc.BytesOfString("hello")
+	value := nogc.BytesOfString("world!")
 	existing := tree.Insert(key.Pointer, key.Len(), value.Pointer)
 	println("existing", uint(uintptr(existing.Unsafe())))
-	existing = tree.InsertBytes(key, nogc.WrapString("world 2!").Pointer)
+	existing = tree.InsertBytes(key, nogc.BytesOfString("world 2!").Pointer)
 	println("existing", nogc.BytesRef(existing).String())
 	existing = tree.FindBytes(key)
 	println("found", nogc.BytesRef(existing).String())
@@ -69,7 +69,7 @@ func benchmarkCGO(iterations int) {
 }
 
 func benchmarkARTInsert(iterations int) {
-	tree, _ := art.New()
+	tree, _ := tree.New()
 	key := nogc.AllocBytes(8)
 
 	start := time.Now().UnixNano()

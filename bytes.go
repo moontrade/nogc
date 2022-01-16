@@ -6,29 +6,6 @@ import (
 	"unsafe"
 )
 
-//type StrSlice struct {
-//	Pointer
-//	str Bytes
-//}
-
-const (
-//_SDSType5 = 0
-//_Type8    = 1
-//_Type16   = 2
-//_Type32   = 3
-//_Type64   = 4
-//_TypeMask = 7
-//_TypeBits = 3
-//
-//_8HeaderSize  = 3
-//_16HeaderSize = 4
-//_32HeaderSize = 6
-//_64HeaderSize = 10
-//_Max8Size     = math.MaxUint8 - _8HeaderSize
-//_Max16Size    = math.MaxUint16 - _16HeaderSize
-//_Max32Size    = math.MaxUint32 - _32HeaderSize
-)
-
 // Bytes is a compact single dynamic allocation to be used as an unsafe replacement for string.
 type Bytes struct {
 	Pointer // Use for unchecked unsafe access
@@ -42,14 +19,14 @@ func AllocBytes(size uintptr) Bytes {
 	return newBytesZeroed(size)
 }
 
-func WrapString(s string) Bytes {
+func BytesOfString(s string) Bytes {
 	str := newBytesZeroed(uintptr(len(s)))
 	str.Pointer.SetString(0, s)
 	str.setLen(len(s))
 	return str
 }
 
-func WrapBytes(b []byte) Bytes {
+func BytesOf(b []byte) Bytes {
 	str := newBytesZeroed(uintptr(len(b)))
 	str.Pointer.SetBytes(0, b)
 	str.setLen(len(b))
@@ -61,7 +38,7 @@ func newBytesZeroed(size uintptr) Bytes {
 	if p == 0 {
 		return Bytes{0}
 	}
-	// Set cap
+	// Put cap
 	*(*uint32)(unsafe.Pointer(p)) = uint32(c)
 	*(*uint32)(unsafe.Pointer(p + 4)) = 0
 	return Bytes{p + 8}
@@ -72,7 +49,7 @@ func newBytes(size uintptr) Bytes {
 	if p == 0 {
 		return Bytes{0}
 	}
-	// Set cap
+	// Put cap
 	*(*uint32)(unsafe.Pointer(p)) = uint32(c)
 	*(*uint32)(unsafe.Pointer(p + 4)) = 0
 	return Bytes{p + 8}
@@ -233,7 +210,7 @@ func (s *Bytes) CString() unsafe.Pointer {
 	}
 	s.EnsureCap(l + 1)
 	// Ensure it's NULL terminated
-	*(*byte)(unsafe.Pointer(uintptr(s.Pointer) + uintptr(l))) = 0
+	*(*byte)(s.Pointer.Add(l).Unsafe()) = 0
 	return s.Unsafe()
 }
 

@@ -8,8 +8,8 @@ import (
 func TestMap(t *testing.T) {
 	m := NewMap(16)
 
-	key := WrapString("MYID")
-	value := WrapString("MYVALUE")
+	key := BytesOfString("MYID")
+	value := BytesOfString("MYVALUE")
 
 	m.Set(key, value)
 

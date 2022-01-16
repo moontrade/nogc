@@ -13,6 +13,11 @@ const PtrSize = 4 << (^uintptr(0) >> 63)
 // so Go won't confuse it for a potential GC managed pointer.
 type Pointer uintptr
 
+func PointerOfString(s string) Pointer {
+	h := *(*_string)(unsafe.Pointer(&s))
+	return Pointer(h.ptr)
+}
+
 func (p Pointer) ToFat(length int) FatPointer {
 	return FatPointer{Pointer: p, len: uintptr(length)}
 }
@@ -97,7 +102,7 @@ func (p Pointer) Byte(offset int) byte {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Set Byte
+// Put Byte
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer

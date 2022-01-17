@@ -17,6 +17,7 @@ package tree
 typedef struct {
 	size_t lock;
 	size_t ownership;
+	size_t calc_memory;
 	size_t ptr;
 	size_t code;
 } art_new_t;
@@ -28,6 +29,7 @@ void do_art_new(size_t arg0, size_t arg1) {
 		tree->free = 1;
 	}
 	args->code = (size_t)art_tree_init(tree);
+	args->calc_memory = args->calc_memory ? 1 : 0;
 	if (args->lock > 0) {
 		tree->fair = args->lock == 1 ? 1 : 0;
 		art_tree_init_lock(tree); // Enable RWSpinLock
@@ -255,8 +257,8 @@ func (art *ART) Memory() int64 {
 
 type Leaf C.art_leaf
 
-func (l *Leaf) Data() nogc.Pointer {
-	return *(*nogc.Pointer)(unsafe.Pointer(l))
+func (l *Leaf) Data() Value {
+	return *(*Value)(unsafe.Pointer(l))
 }
 func (l *Leaf) Key() nogc.FatPointer {
 	return nogc.FatPointerOf(
@@ -279,15 +281,19 @@ const (
 	OwnershipOwned    Ownership = 1
 )
 
-func NewART(lock LockKind, ownership Ownership) (*ART, int) {
+func NewART(lock LockKind, ownership Ownership, calcMemory bool) (*ART, int) {
 	args := struct {
-		lock      uintptr
-		ownership uintptr
-		ptr       uintptr
-		code      uintptr
+		lock       uintptr
+		ownership  uintptr
+		calcMemory uintptr
+		ptr        uintptr
+		code       uintptr
 	}{
 		lock:      uintptr(lock),
 		ownership: uintptr(ownership),
+	}
+	if calcMemory {
+		args.calcMemory = 1
 	}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_art_new), ptr, 0)

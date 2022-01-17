@@ -121,8 +121,9 @@ typedef struct art_tree {
     uint64_t memory;
     int32_t free;
     int32_t fair;
-    void* lock;
+    int32_t calc_memory;
     uint32_t lock_;
+    void* lock;
 } art_tree;
 
 /**

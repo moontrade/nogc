@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/moontrade/nogc/alloc/tlsf"
 )
@@ -29,6 +30,8 @@ func TestAlloc(t *testing.T) {
 			Free(Malloc(128))
 			a := StdMalloc(24)
 			StdFree(a)
+
+			StdFree(Malloc(64))
 		}()
 	}
 
@@ -311,7 +314,7 @@ func BenchmarkAllocator_Alloc(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				size := randomRangeSizes[i%len(randomRangeSizes)]
 				b.SetBytes(int64(size))
-				a.Free(a.AllocZeroed(size))
+				a.Free(a.Alloc(size))
 			}
 			b.StopTimer()
 			var after runtime.MemStats
@@ -329,7 +332,7 @@ func BenchmarkAllocator_Alloc(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				size := randomRangeSizes[i%len(randomRangeSizes)]
 				b.SetBytes(int64(size))
-				a.Free(a.AllocZeroed(size))
+				a.Free(a.Alloc(size))
 			}
 			b.StopTimer()
 			var after runtime.MemStats
@@ -389,6 +392,25 @@ func BenchmarkAllocator_Alloc(b *testing.B) {
 		runtime.ReadMemStats(&after)
 		doAfter(before, after)
 	})
+	//b.Run("rpmalloc zeroed hybrid", func(b *testing.B) {
+	//	runtime.GC()
+	//	runtime.GC()
+	//	var before runtime.MemStats
+	//	runtime.ReadMemStats(&before)
+	//	b.ReportAllocs()
+	//	b.ResetTimer()
+	//	for i := 0; i < b.N; i++ {
+	//		size := randomRangeSizes[i%len(randomRangeSizes)]
+	//		b.SetBytes(int64(size))
+	//		m := Malloc(size)
+	//		Zero(unsafe.Pointer(m), size)
+	//		Free(m)
+	//	}
+	//	b.StopTimer()
+	//	var after runtime.MemStats
+	//	runtime.ReadMemStats(&after)
+	//	doAfter(before, after)
+	//})
 	b.Run("rpmalloc calloc", func(b *testing.B) {
 		runtime.GC()
 		runtime.GC()
@@ -546,9 +568,33 @@ var (
 	}}
 )
 
+// Zero clears n bytes starting at ptr.
+//
+// Usually you should use typedmemclr. memclrNoHeapPointers should be
+// used only when the caller knows that *ptr contains no heap pointers
+// because either:
+//
+// *ptr is initialized memory and its type is pointer-free, or
+//
+// *ptr is uninitialized memory (e.g., memory that's being reused
+// for a new allocation) and hence contains only "junk".
+//
+// memclrNoHeapPointers ensures that if ptr is pointer-aligned, and n
+// is a multiple of the pointer size, then any pointer-aligned,
+// pointer-sized portion is cleared atomically. Despite the function
+// name, this is necessary because this function is the underlying
+// implementation of typedmemclr and memclrHasPointers. See the doc of
+// Memmove for more details.
+//
+// The (CPU-specific) implementations of this function are in memclr_*.s.
+//
+//go:noescape
+//go:linkname Zero runtime.memclrNoHeapPointers
+func Zero(ptr unsafe.Pointer, n uintptr)
+
 func GetBytesZeroed(n int) []byte {
 	b := GetBytes(n)
-	//mem.Zero(unsafe.Pointer(&b[0]), uintptr(cap(b)))
+	Zero(unsafe.Pointer(&b[0]), uintptr(cap(b)))
 	return b
 }
 

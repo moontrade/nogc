@@ -151,7 +151,7 @@ func (a *Heap) Alloc(size uintptr) uintptr {
 	if a == nil {
 		panic("nil")
 	}
-	p := uintptr(unsafe.Pointer(a.allocateBlock(uintptr(size))))
+	p := uintptr(unsafe.Pointer(a.allocateBlock(size)))
 	if p == 0 {
 		return 0
 	}
@@ -162,7 +162,7 @@ func (a *Heap) Alloc(size uintptr) uintptr {
 // AllocZeroed allocates a block of memory that fits the size provided
 //goland:noinspection GoVetUnsafePointer
 func (a *Heap) AllocZeroed(size uintptr) uintptr {
-	p := uintptr(unsafe.Pointer(a.allocateBlock(uintptr(size))))
+	p := uintptr(unsafe.Pointer(a.allocateBlock(size)))
 	if p == 0 {
 		return 0
 	}
@@ -173,7 +173,7 @@ func (a *Heap) AllocZeroed(size uintptr) uintptr {
 
 // Realloc determines the best way to resize an allocation.
 func (a *Heap) Realloc(ptr uintptr, size uintptr) uintptr {
-	p := uintptr(unsafe.Pointer(a.moveBlock(checkUsedBlock(ptr), uintptr(size))))
+	p := uintptr(unsafe.Pointer(a.moveBlock(checkUsedBlock(ptr), size)))
 	if p == 0 {
 		return 0
 	}

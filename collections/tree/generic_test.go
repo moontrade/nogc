@@ -16,23 +16,23 @@ type Bar struct {
 }
 
 func TestGeneric_Get(t *testing.T) {
-	generic := NewARTValueToPointer[int64, Bar](LockKindFair, OwnershipOwned)
+	generic := NewARTValueToPointer[int64, Bar](LockKindFair, OwnershipOwned, false)
 	generic.Put(10, nogc.AllocOf(Bar{ID: 10}))
 	v, found := generic.Get(10)
 	_ = found
 	var vv *Bar = v.Unwrap()
 	println(vv)
 
-	g1 := NewARTValueToValue[int64, nogc.Pointer](LockKindNone)
+	g1 := NewARTValueToValue[int64, nogc.Pointer](LockKindNone, false)
 	_ = g1
 
 	g2 := NewARTPointerToPointer[int64, Bar]
 	_ = g2
 
-	g3 := NewARTValueToValue[int64, int64](LockKindNone)
+	g3 := NewARTValueToValue[int64, int64](LockKindNone, false)
 	_ = g3
 
-	g4 := NewARTValueToPointer[int64, Bar](LockKindNone, OwnershipNotOwned)
+	g4 := NewARTValueToPointer[int64, Bar](LockKindNone, OwnershipNotOwned, false)
 	_ = g4
 }
 
@@ -62,7 +62,7 @@ func BenchmarkAllocOf(b *testing.B) {
 
 func BenchmarkARTValueToValue_Get(b *testing.B) {
 	b.Run("Not ThreadSafe or Generic", func(b *testing.B) {
-		g3, _ := NewART(LockKindNone, OwnershipNotOwned)
+		g3, _ := NewART(LockKindNone, OwnershipNotOwned, false)
 		defer g3.Free()
 
 		for i := 0; i < b.N; i++ {
@@ -80,7 +80,7 @@ func BenchmarkARTValueToValue_Get(b *testing.B) {
 	})
 
 	b.Run("Not ThreadSafe", func(b *testing.B) {
-		g3 := NewARTValueToValue[int, int](LockKindNone)
+		g3 := NewARTValueToValue[int, int](LockKindNone, false)
 		defer g3.Free()
 
 		for i := 0; i < b.N; i++ {
@@ -96,7 +96,7 @@ func BenchmarkARTValueToValue_Get(b *testing.B) {
 	})
 
 	b.Run("ThreadSafe Unfair", func(b *testing.B) {
-		g3 := NewARTValueToValue[int, int](LockKindUnfair)
+		g3 := NewARTValueToValue[int, int](LockKindUnfair, false)
 		defer g3.Free()
 
 		for i := 0; i < b.N; i++ {
@@ -112,7 +112,7 @@ func BenchmarkARTValueToValue_Get(b *testing.B) {
 	})
 
 	b.Run("ThreadSafe Fair", func(b *testing.B) {
-		g3 := NewARTValueToValue[int, int](LockKindFair)
+		g3 := NewARTValueToValue[int, int](LockKindFair, false)
 		defer g3.Free()
 
 		for i := 0; i < b.N; i++ {
@@ -145,7 +145,7 @@ func BenchmarkARTValueToValue_Get(b *testing.B) {
 
 func BenchmarkARTValueToValue_Put(b *testing.B) {
 	b.Run("Not ThreadSafe", func(b *testing.B) {
-		g3 := NewARTValueToValue[int, int](LockKindNone)
+		g3 := NewARTValueToValue[int, int](LockKindNone, false)
 		defer g3.Free()
 
 		b.ReportAllocs()
@@ -157,7 +157,7 @@ func BenchmarkARTValueToValue_Put(b *testing.B) {
 	})
 
 	b.Run("ThreadSafe Unfair", func(b *testing.B) {
-		g3 := NewARTValueToValue[int, int](LockKindUnfair)
+		g3 := NewARTValueToValue[int, int](LockKindUnfair, false)
 		defer g3.Free()
 
 		b.ReportAllocs()
@@ -169,7 +169,7 @@ func BenchmarkARTValueToValue_Put(b *testing.B) {
 	})
 
 	b.Run("ThreadSafe Fair", func(b *testing.B) {
-		g3 := NewARTValueToValue[int, int](LockKindFair)
+		g3 := NewARTValueToValue[int, int](LockKindFair, false)
 		defer g3.Free()
 
 		b.ReportAllocs()

@@ -263,7 +263,10 @@ func ReadGlobalStats(stats *GlobalStats) {
 
 // Malloc allocate a memory block of at least the given size
 func StdMalloc(size uintptr) uintptr {
-	args := malloc_t{size: size}
+	args := struct {
+		size uintptr
+		ptr  uintptr
+	}{size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_malloc), ptr, 0)
 	return args.ptr
@@ -274,36 +277,65 @@ func StdFree(ptr uintptr) {
 	unsafecgo.NonBlocking((*byte)(C.do_free), ptr, 0)
 }
 
-type malloc_t struct {
-	size uintptr
-	ptr  uintptr
-}
-
 // Malloc allocate a memory block of at least the given size
 func Malloc(size uintptr) uintptr {
-	args := malloc_t{size: size}
+	args := struct {
+		size uintptr
+		ptr  uintptr
+	}{size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc), ptr, 0)
 	return args.ptr
 }
 
+// Zero clears n bytes starting at ptr.
+//
+// Usually you should use typedmemclr. memclrNoHeapPointers should be
+// used only when the caller knows that *ptr contains no heap pointers
+// because either:
+//
+// *ptr is initialized memory and its type is pointer-free, or
+//
+// *ptr is uninitialized memory (e.g., memory that's being reused
+// for a new allocation) and hence contains only "junk".
+//
+// memclrNoHeapPointers ensures that if ptr is pointer-aligned, and n
+// is a multiple of the pointer size, then any pointer-aligned,
+// pointer-sized portion is cleared atomically. Despite the function
+// name, this is necessary because this function is the underlying
+// implementation of typedmemclr and memclrHasPointers. See the doc of
+// Memmove for more details.
+//
+// The (CPU-specific) implementations of this function are in memclr_*.s.
+//
+//go:noescape
+//go:linkname memclrNoHeapPointers runtime.memclrNoHeapPointers
+func memclrNoHeapPointers(ptr unsafe.Pointer, n uintptr)
+
 // Malloc allocate a memory block of at least the given size
 func MallocZeroed(size uintptr) uintptr {
-	args := malloc_t{size: size}
+	args := struct {
+		size uintptr
+		ptr  uintptr
+	}{size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
-	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_zero), ptr, 0)
+	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc), ptr, 0)
+	// This is faster than memset in C and calloc(1, size)
+	memclrNoHeapPointers(unsafe.Pointer(args.ptr), size)
 	return args.ptr
-}
-
-type malloc_cap_t struct {
-	size uintptr
-	ptr  uintptr
-	cap  uintptr
+	//args := malloc_t{size: size}
+	//ptr := uintptr(unsafe.Pointer(&args))
+	//unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_zero), ptr, 0)
+	//return args.ptr
 }
 
 // MallocCap allocate a memory block of at least the given size
 func MallocCap(size uintptr) (uintptr, uintptr) {
-	args := malloc_cap_t{size: size}
+	args := struct {
+		size uintptr
+		ptr  uintptr
+		cap  uintptr
+	}{size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_cap), ptr, 0)
 	return args.ptr, args.cap
@@ -311,21 +343,23 @@ func MallocCap(size uintptr) (uintptr, uintptr) {
 
 // MallocZeroedCap allocate a memory block of at least the given size
 func MallocZeroedCap(size uintptr) (uintptr, uintptr) {
-	args := malloc_cap_t{size: size}
+	args := struct {
+		size uintptr
+		ptr  uintptr
+		cap  uintptr
+	}{size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_zero_cap), ptr, 0)
 	return args.ptr, args.cap
 }
 
-type calloc_t struct {
-	num  uintptr
-	size uintptr
-	ptr  uintptr
-}
-
 // Calloc Allocates a memory block of at least the given size and zero initialize it.
 func Calloc(num, size uintptr) uintptr {
-	args := calloc_t{
+	args := struct {
+		num  uintptr
+		size uintptr
+		ptr  uintptr
+	}{
 		num:  num,
 		size: size,
 	}
@@ -334,16 +368,14 @@ func Calloc(num, size uintptr) uintptr {
 	return args.ptr
 }
 
-type calloc_cap_t struct {
-	num  uintptr
-	size uintptr
-	ptr  uintptr
-	cap  uintptr
-}
-
 // Calloc Allocates a memory block of at least the given size and zero initialize it.
 func CallocCap(num, size uintptr) (uintptr, uintptr) {
-	args := calloc_cap_t{
+	args := struct {
+		num  uintptr
+		size uintptr
+		ptr  uintptr
+		cap  uintptr
+	}{
 		num:  num,
 		size: size,
 	}
@@ -352,15 +384,13 @@ func CallocCap(num, size uintptr) (uintptr, uintptr) {
 	return args.ptr, args.cap
 }
 
-type realloc_t struct {
-	ptr    uintptr
-	size   uintptr
-	newptr uintptr
-}
-
 // Realloc the given block to at least the given size
 func Realloc(ptr, size uintptr) uintptr {
-	args := realloc_t{
+	args := struct {
+		ptr    uintptr
+		size   uintptr
+		newptr uintptr
+	}{
 		ptr:  ptr,
 		size: size,
 	}
@@ -369,16 +399,14 @@ func Realloc(ptr, size uintptr) uintptr {
 	return args.newptr
 }
 
-type realloc_cap_t struct {
-	ptr    uintptr
-	size   uintptr
-	newptr uintptr
-	cap    uintptr
-}
-
 // Realloc the given block to at least the given size
 func ReallocCap(ptr, size uintptr) (uintptr, uintptr) {
-	args := realloc_cap_t{
+	args := struct {
+		ptr    uintptr
+		size   uintptr
+		newptr uintptr
+		cap    uintptr
+	}{
 		ptr:  ptr,
 		size: size,
 	}
@@ -387,14 +415,12 @@ func ReallocCap(ptr, size uintptr) (uintptr, uintptr) {
 	return args.newptr, args.cap
 }
 
-type usable_size_t struct {
-	ptr uintptr
-	ret uintptr
-}
-
 // UsableSize Query the usable size of the given memory block (from given pointer to the end of block)
 func UsableSize(ptr uintptr) uintptr {
-	args := usable_size_t{ptr: ptr}
+	args := struct {
+		ptr uintptr
+		ret uintptr
+	}{ptr: ptr}
 	p := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_usable_size), p, 0)
 	return args.ret
@@ -409,142 +435,122 @@ func InitThread() {
 	C.rpmalloc_thread_initialize()
 }
 
-type acquire_heap_t struct {
-	ptr uintptr
-}
-
 func AcquireHeap() *Heap {
-	args := acquire_heap_t{}
+	args := struct {
+		ptr uintptr
+	}{}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_acquire), ptr, 0)
 	return (*Heap)(unsafe.Pointer(args.ptr))
 }
 
-type release_heap_t struct {
-	heap uintptr
-}
-
 func (h *Heap) Release() {
-	args := release_heap_t{heap: uintptr(unsafe.Pointer(h))}
+	args := struct {
+		heap uintptr
+	}{heap: uintptr(unsafe.Pointer(h))}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_release), ptr, 0)
 }
 
-type heap_alloc_t struct {
-	heap uintptr
-	size uintptr
-	ptr  uintptr
-}
-
 // Alloc Allocate a memory block of at least the given size using the given heap.
 func (h *Heap) Alloc(size uintptr) uintptr {
-	args := heap_alloc_t{heap: uintptr(unsafe.Pointer(h)), size: size}
+	args := struct {
+		heap uintptr
+		size uintptr
+		ptr  uintptr
+	}{heap: uintptr(unsafe.Pointer(h)), size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_alloc), ptr, 0)
 	return args.ptr
 }
 
-type heap_alloc_cap_t struct {
-	heap uintptr
-	size uintptr
-	ptr  uintptr
-	cap  uintptr
-}
-
 // AllocCap Allocate a memory block of at least the given size using the given heap.
 func (h *Heap) AllocCap(size uintptr) (uintptr, uintptr) {
-	args := heap_alloc_cap_t{heap: uintptr(unsafe.Pointer(h)), size: size}
+	args := struct {
+		heap uintptr
+		size uintptr
+		ptr  uintptr
+		cap  uintptr
+	}{heap: uintptr(unsafe.Pointer(h)), size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_alloc), ptr, 0)
 	return args.ptr, args.cap
 }
 
-type heap_calloc_t struct {
-	heap uintptr
-	num  uintptr
-	size uintptr
-	ptr  uintptr
-}
-
 // Calloc Allocate a memory block of at least the given size using the given heap and zero initialize it.
 func (h *Heap) Calloc(num, size uintptr) uintptr {
-	args := heap_calloc_t{heap: uintptr(unsafe.Pointer(h)), num: num, size: size}
+	args := struct {
+		heap uintptr
+		num  uintptr
+		size uintptr
+		ptr  uintptr
+	}{heap: uintptr(unsafe.Pointer(h)), num: num, size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_calloc), ptr, 0)
 	return args.ptr
 }
 
-type heap_calloc_cap_t struct {
-	heap uintptr
-	num  uintptr
-	size uintptr
-	ptr  uintptr
-	cap  uintptr
-}
-
 // Calloc Allocate a memory block of at least the given size using the given heap and zero initialize it.
 func (h *Heap) CallocCap(num, size uintptr) (uintptr, uintptr) {
-	args := heap_calloc_cap_t{heap: uintptr(unsafe.Pointer(h)), num: num, size: size}
+	args := struct {
+		heap uintptr
+		num  uintptr
+		size uintptr
+		ptr  uintptr
+		cap  uintptr
+	}{heap: uintptr(unsafe.Pointer(h)), num: num, size: size}
 	ptr := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_calloc_cap), ptr, 0)
 	return args.ptr, args.cap
 }
 
-type heap_realloc_t struct {
-	heap   uintptr
-	ptr    uintptr
-	size   uintptr
-	newptr uintptr
-	flags  int32
-}
-
 // Realloc Reallocate the given block to at least the given size. The memory block MUST be allocated
 // by the same heap given to this function.
 func (h *Heap) Realloc(ptr, size uintptr, flags int32) uintptr {
-	args := heap_realloc_t{heap: uintptr(unsafe.Pointer(h)), ptr: ptr, size: size, flags: flags}
+	args := struct {
+		heap   uintptr
+		ptr    uintptr
+		size   uintptr
+		newptr uintptr
+		flags  int32
+	}{heap: uintptr(unsafe.Pointer(h)), ptr: ptr, size: size, flags: flags}
 	p := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_realloc), p, 0)
 	return args.newptr
 }
 
-type heap_realloc_cap_t struct {
-	heap   uintptr
-	ptr    uintptr
-	size   uintptr
-	newptr uintptr
-	cap    uintptr
-	flags  int32
-}
-
 // ReallocCap Reallocate the given block to at least the given size. The memory block MUST be allocated
 // by the same heap given to this function.
 func (h *Heap) ReallocCap(ptr, size uintptr, flags int32) (uintptr, uintptr) {
-	args := heap_realloc_cap_t{heap: uintptr(unsafe.Pointer(h)), ptr: ptr, size: size, flags: flags}
+	args := struct {
+		heap   uintptr
+		ptr    uintptr
+		size   uintptr
+		newptr uintptr
+		cap    uintptr
+		flags  int32
+	}{heap: uintptr(unsafe.Pointer(h)), ptr: ptr, size: size, flags: flags}
 	p := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_realloc_cap), p, 0)
 	return args.newptr, args.cap
 }
 
-type heap_free_t struct {
-	heap uintptr
-	ptr  uintptr
-}
-
 // Free the given memory block from the given heap. The memory block MUST be allocated
 // by the same heap given to this function.
 func (h *Heap) Free(ptr uintptr) {
-	args := heap_free_t{heap: uintptr(unsafe.Pointer(h)), ptr: ptr}
+	args := struct {
+		heap uintptr
+		ptr  uintptr
+	}{heap: uintptr(unsafe.Pointer(h)), ptr: ptr}
 	p := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_free), p, 0)
 }
 
-type heap_free_all_t struct {
-	heap uintptr
-}
-
 // FreeAll memory allocated by the heap
 func (h *Heap) FreeAll() {
-	args := heap_free_all_t{heap: uintptr(unsafe.Pointer(h))}
+	args := struct {
+		heap uintptr
+	}{heap: uintptr(unsafe.Pointer(h))}
 	p := uintptr(unsafe.Pointer(&args))
 	unsafecgo.NonBlocking((*byte)(C.do_rpmalloc_heap_free_all), p, 0)
 }

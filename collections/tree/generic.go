@@ -21,9 +21,9 @@ type ARTPointerToPointer[K any, V any] struct {
 func NewARTPointerToPointer[K any, V any](
 	toFP func(key *K) nogc.FatPointer,
 	fromFP func(key nogc.FatPointer) K,
-	lock LockKind, ownership Ownership,
+	lock LockKind, ownership Ownership, calcMemory bool,
 ) ARTPointerToPointer[K, V] {
-	t, _ := NewART(lock, ownership)
+	t, _ := NewART(lock, ownership, calcMemory)
 	return ARTPointerToPointer[K, V]{
 		art:    t,
 		toFP:   toFP,
@@ -143,8 +143,8 @@ func (g *ARTValueToPointer[K, V]) Memory() int64 {
 	return g.art.Memory()
 }
 
-func NewARTValueToPointer[K ValueType, V any](lock LockKind, ownership Ownership) ARTValueToPointer[K, V] {
-	t, _ := NewART(lock, ownership)
+func NewARTValueToPointer[K ValueType, V any](lock LockKind, ownership Ownership, calcMemory bool) ARTValueToPointer[K, V] {
+	t, _ := NewART(lock, ownership, calcMemory)
 	return ARTValueToPointer[K, V]{art: t}
 }
 
@@ -234,8 +234,8 @@ func SizeofSizeT() int {
 	return int(unsafe.Sizeof(C.size_t(0)))
 }
 
-func NewARTValueToValue[K ValueType, V ValueType](lock LockKind) ARTValueToValue[K, V] {
-	t, _ := NewART(lock, OwnershipNotOwned)
+func NewARTValueToValue[K ValueType, V ValueType](lock LockKind, calcMemory bool) ARTValueToValue[K, V] {
+	t, _ := NewART(lock, OwnershipNotOwned, calcMemory)
 	return ARTValueToValue[K, V]{art: t}
 }
 
@@ -317,8 +317,9 @@ func NewARTPointerToValue[K any, V ValueType](
 	toFP func(key *K) nogc.FatPointer,
 	fromFP func(key nogc.FatPointer) K,
 	lock LockKind,
+	calcMemory bool,
 ) ARTPointerToValue[K, V] {
-	t, _ := NewART(lock, OwnershipNotOwned)
+	t, _ := NewART(lock, OwnershipNotOwned, calcMemory)
 	return ARTPointerToValue[K, V]{
 		art:    t,
 		toFP:   toFP,
@@ -400,30 +401,30 @@ func fpToByteSlice(fp nogc.FatPointer) []byte {
 	return fp.Bytes()
 }
 
-func NewARTStringToPointer[V any](lock LockKind, ownership Ownership) ARTPointerToPointer[string, V] {
+func NewARTStringToPointer[V any](lock LockKind, ownership Ownership, calcMemory bool) ARTPointerToPointer[string, V] {
 	return NewARTPointerToPointer[string, V](
 		nogc.FatPointerOfStringRef,
 		fpToString,
-		lock, ownership)
+		lock, ownership, calcMemory)
 }
 
-func NewARTStringToValue[V ValueType](lock LockKind) ARTPointerToValue[string, V] {
+func NewARTStringToValue[V ValueType](lock LockKind, calcMemory bool) ARTPointerToValue[string, V] {
 	return NewARTPointerToValue[string, V](
 		nogc.FatPointerOfStringRef,
 		fpToString,
-		lock)
+		lock, calcMemory)
 }
 
-func NewARTByteSliceToPointer[V any](lock LockKind, ownership Ownership) ARTPointerToPointer[[]byte, V] {
+func NewARTByteSliceToPointer[V any](lock LockKind, ownership Ownership, calcMemory bool) ARTPointerToPointer[[]byte, V] {
 	return NewARTPointerToPointer[[]byte, V](
 		nogc.FatPointerOfBytesRef,
 		fpToByteSlice,
-		lock, ownership)
+		lock, ownership, calcMemory)
 }
 
-func NewARTByteSliceToValue[V ValueType](lock LockKind) ARTPointerToValue[[]byte, V] {
+func NewARTByteSliceToValue[V ValueType](lock LockKind, calcMemory bool) ARTPointerToValue[[]byte, V] {
 	return NewARTPointerToValue[[]byte, V](
 		nogc.FatPointerOfBytesRef,
 		fpToByteSlice,
-		lock)
+		lock, calcMemory)
 }

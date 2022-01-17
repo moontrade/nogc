@@ -40,18 +40,12 @@ static inline void rwlock_unlock_shared(void* lock) {
     ((RWSpinLock*)lock)->unlock_shared();
 }
 
-static void rwticketlock_lock(void* lock) {
-//    reinterpret_cast<RWTicketSpinLock32*>(lock)->lock();
-//    ((RWTicketSpinLock32*)lock)->lock();
-//    std::invoke(&RWTicketSpinLock32::lock, (RWTicketSpinLock32*)lock);
+static inline void rwticketlock_lock(void* lock) {
     ((RWTicketSpinLock32*)lock)->lock();
 }
 
-static void rwticketlock_unlock(void* lock) {
-//    ((RWTicketSpinLock32*)lock)->unlock();
-//    reinterpret_cast<RWTicketSpinLock32*>(lock)->unlock();
+static inline void rwticketlock_unlock(void* lock) {
     ((RWTicketSpinLock32*)lock)->unlock();
-//    std::invoke(&RWTicketSpinLock32::unlock, (RWTicketSpinLock32*)lock);
 }
 
 static inline void rwticketlock_lock_shared(void* lock) {
@@ -62,29 +56,29 @@ static inline void rwticketlock_unlock_shared(void* lock) {
     ((RWTicketSpinLock32*)lock)->unlock_shared();
 }
 
-struct art_lock_api {
-    int fair;
-    void (* lock)(void*);
-    void (* unlock)(void*);
-    void (* lock_shared)(void*);
-    void (* unlock_shared)(void*);
-};
-
-const struct art_lock_api art_lock_api_unfair = {
-    .fair = 0,
-    .lock = rwlock_lock,
-    .unlock = rwlock_unlock,
-    .lock_shared = rwlock_lock_shared,
-    .unlock_shared = rwlock_unlock_shared,
-};
-
-const struct art_lock_api art_lock_api_fair = {
-    .fair = 1,
-    .lock = rwticketlock_lock,
-    .unlock = rwticketlock_unlock,
-    .lock_shared = rwticketlock_lock_shared,
-    .unlock_shared = rwticketlock_unlock_shared,
-};
+//struct art_lock_api {
+//    int fair;
+//    void (* lock)(void*);
+//    void (* unlock)(void*);
+//    void (* lock_shared)(void*);
+//    void (* unlock_shared)(void*);
+//};
+//
+//const struct art_lock_api art_lock_api_unfair = {
+//    .fair = 0,
+//    .lock = rwlock_lock,
+//    .unlock = rwlock_unlock,
+//    .lock_shared = rwlock_lock_shared,
+//    .unlock_shared = rwlock_unlock_shared,
+//};
+//
+//const struct art_lock_api art_lock_api_fair = {
+//    .fair = 1,
+//    .lock = rwticketlock_lock,
+//    .unlock = rwticketlock_unlock,
+//    .lock_shared = rwticketlock_lock_shared,
+//    .unlock_shared = rwticketlock_unlock_shared,
+//};
 
 /**
  * Allocates a node of the given type,
@@ -608,7 +602,9 @@ static void add_child48(art_tree *t, art_node48 *n, art_node **ref, unsigned cha
         copy_header((art_node *) new_node, (art_node *) n);
         *ref = (art_node *) new_node;
         free(n);
-        t->memory += sizeof(art_node256) - sizeof(art_node48);
+        if (t->calc_memory) {
+            t->memory += sizeof(art_node256) - sizeof(art_node48);
+        }
         add_child256(t, new_node, ref, c, child);
     }
 }
@@ -677,7 +673,9 @@ static void add_child16(art_tree *t, art_node16 *n, art_node **ref, unsigned cha
         copy_header((art_node *) new_node, (art_node *) n);
         *ref = (art_node *) new_node;
         free(n);
-        t->memory += sizeof(art_node48) - sizeof(art_node16);
+        if (t->calc_memory) {
+            t->memory += sizeof(art_node48) - sizeof(art_node16);
+        }
         add_child48(t, new_node, ref, c, child);
     }
 }
@@ -710,7 +708,9 @@ static void add_child4(art_tree *t, art_node4 *n, art_node **ref, unsigned char 
         copy_header((art_node *) new_node, (art_node *) n);
         *ref = (art_node *) new_node;
         free(n);
-        t->memory += sizeof(art_node16) - sizeof(art_node4);
+        if (t->calc_memory) {
+            t->memory += sizeof(art_node16) - sizeof(art_node4);
+        }
         add_child16(t, new_node, ref, c, child);
     }
 }
@@ -776,8 +776,10 @@ recursive_insert(art_tree *t, art_node *n, art_node **ref, const unsigned char *
         }
 
         // New value, we must split the leaf into a node4
-        art_node4 *new_node = (art_node4 *) alloc_node(NODE4);
-        t->memory += sizeof(art_node4);
+        art_node4 *new_node = (art_node4 *) alloc_node(NODE4);\
+        if (t->calc_memory) {
+            t->memory += sizeof(art_node4);
+        }
 
         // Create a new leaf
         art_leaf *l2 = make_leaf(key, key_len, value);
@@ -804,7 +806,9 @@ recursive_insert(art_tree *t, art_node *n, art_node **ref, const unsigned char *
 
         // Create a new node
         art_node4 *new_node = (art_node4 *) alloc_node(NODE4);
-        t->memory += sizeof(art_node4);
+        if (t->calc_memory) {
+            t->memory += sizeof(art_node4);
+        }
         *ref = (art_node *) new_node;
         new_node->n.partial_len = prefix_diff;
         memcpy(new_node->n.partial, n->partial, min(MAX_PREFIX_LEN, prefix_diff));
@@ -864,7 +868,9 @@ art_value art_insert(art_tree *t, const unsigned char *key, int key_len, art_val
     art_value old = recursive_insert(t, t->root, &t->root, key, key_len, value, 0, &old_val, 1);
     if (!old_val) {
         t->size++;
-        t->memory += (uint64_t) sizeof(art_leaf);
+        if (t->calc_memory) {
+            t->memory += (uint64_t) sizeof(art_leaf);
+        }
     }
     if (t->lock) {
         if (t->fair) {
@@ -888,7 +894,9 @@ art_search_result art_insert_value(art_tree *t, const unsigned char *key, int ke
     art_value old = recursive_insert(t, t->root, &t->root, key, key_len, value, 0, &old_val, 1);
     if (!old_val) {
         t->size++;
-        t->memory += (uint64_t) sizeof(art_leaf);
+        if (t->calc_memory) {
+            t->memory += (uint64_t) sizeof(art_leaf);
+        }
     }
     if (t->lock) {
         if (t->fair) {
@@ -927,7 +935,9 @@ art_value art_insert_no_replace(art_tree *t, const unsigned char *key, int key_l
     art_value old = recursive_insert(t, t->root, &t->root, key, key_len, value, 0, &old_val, 0);
     if (!old_val) {
         t->size++;
-        t->memory += (uint64_t) sizeof(art_leaf);
+        if (t->calc_memory) {
+            t->memory += (uint64_t) sizeof(art_leaf);
+        }
     }
 
     if (t->lock) {
@@ -953,7 +963,9 @@ art_search_result art_insert_no_replace_value(art_tree *t, const unsigned char *
     art_value old = recursive_insert(t, t->root, &t->root, key, key_len, value, 0, &old_val, 0);
     if (!old_val) {
         t->size++;
-        t->memory += (uint64_t) sizeof(art_leaf);
+        if (t->calc_memory) {
+            t->memory += (uint64_t) sizeof(art_leaf);
+        }
     }
 
     if (t->lock) {

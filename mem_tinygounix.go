@@ -1,5 +1,6 @@
-//go:build tinygo && (darwin || (linux && !baremetal && !wasi) || (freebsd && !baremetal)) && !nintendoswitch
+//go:build tinygo && !tinygo.wasm && (darwin || (linux && !baremetal && !wasi) || (freebsd && !baremetal)) && !nintendoswitch
 // +build tinygo
+// +build !tinygo.wasm
 // +build darwin linux,!baremetal,!wasi freebsd,!baremetal
 // +build !nintendoswitch
 
@@ -7,8 +8,14 @@ package nogc
 
 import "unsafe"
 
-//go:linkname malloc malloc
-func malloc(size uintptr) unsafe.Pointer
+////go:linkname malloc malloc
+//func malloc(size uintptr) unsafe.Pointer
+
+func allocatorPointer() uintptr {
+	return 0
+}
+
+func initAllocator(start, end uintptr) {}
 
 func Compare(a, b unsafe.Pointer, n uintptr) int {
 	if a == nil {

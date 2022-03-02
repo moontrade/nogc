@@ -1,8 +1,4 @@
-//go:build tinygo && gc.provided && (darwin || (linux && !baremetal && !wasi) || (freebsd && !baremetal)) && !nintendoswitch
-// +build tinygo
-// +build gc.provided
-// +build darwin linux,!baremetal,!wasi freebsd,!baremetal
-// +build !nintendoswitch
+//go:build tinygo && gc.provided && !tinygo.wasm && (darwin || (linux && !baremetal && !wasi) || (freebsd && !baremetal)) && !nintendoswitch
 
 package nogc
 
@@ -14,11 +10,11 @@ import (
 // GC Instance
 ////////////////////////////////////////////////////////////////////////////////////
 
-var collector *gc
+//var collector *gc
 
 //go:linkname gcInitHeap runtime.gcInitHeap
 func gcInitHeap(heapStart, heapEnd uintptr) {
-	println("gcInitHeap", uint(heapStart), uint(heapEnd))
+	println("gcInitHeap!!!", uint(heapStart), uint(heapEnd))
 	//if allocator == nil {
 	//	initAllocator(heapStart, heapEnd)
 	//}
@@ -30,7 +26,7 @@ func gcInitHeap(heapStart, heapEnd uintptr) {
 ////////////////////////////////////////////////////////////////////////////////////
 
 //go:linkname gcAlloc runtime.gcAlloc
-func gcAlloc(size uintptr) unsafe.Pointer {
+func gcAlloc(size uintptr, layout unsafe.Pointer) unsafe.Pointer {
 	if gc_TRACE {
 		println("gcAlloc", uint(size))
 	}
@@ -49,7 +45,6 @@ func gcFree(ptr unsafe.Pointer) {
 	if gc_TRACE {
 		println("gcFree", uint(uintptr(ptr)))
 	}
-	println("gcFree", uint(uintptr(ptr)))
 	if !collector.Free(uintptr(ptr)) {
 		Free(Pointer(ptr))
 	}
@@ -62,11 +57,10 @@ func gcFree(ptr unsafe.Pointer) {
 //go:linkname gcRun runtime.gcRun
 func gcRun() {
 	//start := time.Now().UnixNano()
-
 	collector.Collect()
 
 	//println("full GC", time.Now().UnixNano()-start)
-	collector.Print()
+	//collector.Print()
 }
 
 //go:linkname gcKeepAlive runtime.gcKeepAlive
@@ -102,7 +96,7 @@ func markGlobals()
 
 //go:linkname gcMarkGlobals runtime.gcMarkGlobals
 func gcMarkGlobals(start, end uintptr) {
-	println("gcMarkGlobals", uint(start), uint(end))
+	//println("gcMarkGlobals", uint(start), uint(end))
 	//collector.markRoots(Pointer(start), Pointer(end))
 	collector.markRoot(end)
 }

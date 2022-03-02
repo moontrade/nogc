@@ -1,5 +1,5 @@
-//go:build tinygo && tinygo.wasm
-// +build tinygo,tinygo.wasm
+//go:build tinygo.wasm
+// +build tinygo.wasm
 
 package nogc
 
@@ -84,17 +84,6 @@ func Scope(fn func(a AutoFree)) {
 //	auto.Free()
 //}
 
-func extalloc(size uintptr) unsafe.Pointer {
-	ptr := unsafe.Pointer(allocator.Alloc(size))
-	//println("extalloc", uint(uintptr(ptr)))
-	return ptr
-}
-
-func extfree(ptr unsafe.Pointer) {
-	//println("extfree", uint(uintptr(ptr)))
-	allocator.Free(uintptr(ptr))
-}
-
 ////////////////////////////////////////////////////////////////////////////////////
 // tinygo hooks
 ////////////////////////////////////////////////////////////////////////////////////
@@ -125,9 +114,13 @@ func growBy(pages int32) (uintptr, uintptr) {
 	return uintptr(before * wasmPageSize), uintptr(after * wasmPageSize)
 }
 
+func allocatorPointer() uintptr {
+	return uintptr(unsafe.Pointer(allocator))
+}
+
 //go:linkname initAllocator runtime.initAllocator
 func initAllocator(heapStart, heapEnd uintptr) {
-	//println("initAllocator", uint(heapStart))
+	//println("initAllocator", uint(heapStart), uint(heapEnd))
 	//println("globals", uint(globalsStart), uint(globalsEnd))
 
 	// Did we get called twice?

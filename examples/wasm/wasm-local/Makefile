@@ -1,8 +1,11 @@
 default:
-	../../../../tinygo/build/tinygo build -o main.wasm -target wasi -scheduler coroutines -gc provided --print-allocs=. --no-debug .
+	#../../../../../tinygo-org/tinygo/build/tinygo build -o main.wasm -target wasi -gc provided --print-allocs=. --no-debug .
+	#../../../../../tinygo-org/tinygo/build/tinygo build -o main.wasm -target wasi -gc conservative --opt z --print-allocs=. --no-debug .
+	../../../../../tinygo-org/tinygo/build/tinygo build -o main.wasm -target wasi -scheduler asyncify -gc provided --opt z --print-allocs=. --no-debug .
 	#../../../../tinygo/build/tinygo build -o main.wasm -target wasi -scheduler coroutines -gc extalloc --print-allocs=. --no-debug .
 	#../../../../tinygo/build/tinygo build -o main.wasm -target wasi -scheduler coroutines -gc conservative --print-allocs=. --no-debug .
-	../../../../tinygo/build/tinygo build -o moon -scheduler coroutines -gc provided --print-allocs=. .
+	#../../../../../tinygo-org/tinygo/build/tinygo build -o moon -scheduler coroutines -gc provided --print-allocs=. .
+	#../../../../../tinygo-org/tinygo/build/tinygo build -o moon -scheduler coroutines -gc provided --print-allocs=. .
 	#../../../../tinygo/build/tinygo build -o moon -scheduler coroutines -gc conservative --print-allocs=. .
 	#../../../../tinygo/build/tinygo build -o moon -scheduler tasks -gc extalloc --print-allocs=. --no-debug .
 	#go build -o maingo

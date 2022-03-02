@@ -344,7 +344,17 @@ func (p Pointer) UInt24(offset int) uint32 {
 }
 
 //goland:noinspection GoVetUnsafePointer
+func (p Pointer) Uint24(offset int) uint32 {
+	return p.UInt24LE(offset)
+}
+
+//goland:noinspection GoVetUnsafePointer
 func (p Pointer) SetUInt24(offset int, v uint32) {
+	p.SetUInt24LE(offset, v)
+}
+
+//goland:noinspection GoVetUnsafePointer
+func (p Pointer) SetUint24(offset int, v uint32) {
 	p.SetUInt24LE(offset, v)
 }
 

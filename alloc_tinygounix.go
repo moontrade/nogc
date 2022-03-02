@@ -8,7 +8,6 @@ package nogc
 
 import (
 	"github.com/moontrade/nogc/alloc/rpmalloc"
-	"unsafe"
 )
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -84,15 +83,4 @@ func SizeOf(ptr Pointer) uintptr {
 //	auto.Free()
 //}
 
-func initAllocator() {}
-
-func extalloc(size uintptr) unsafe.Pointer {
-	ptr := unsafe.Pointer(Alloc(size))
-	//println("extalloc", uint(uintptr(ptr)))
-	return ptr
-}
-
-func extfree(ptr unsafe.Pointer) {
-	//println("extfree", uint(uintptr(ptr)))
-	Free(Pointer(ptr))
-}
+func initAllocator(heapStart, heapEnd uintptr) {}

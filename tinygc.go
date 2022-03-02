@@ -1,5 +1,4 @@
-//go:build !gc.conservative && !gc.extalloc
-// +build !gc.conservative,!gc.extalloc
+//go:build tinygo && gc.provided
 
 package nogc
 
@@ -25,14 +24,14 @@ const (
 	gc_ObjectMaxSize = (1 << 30) - gc_ObjectOverhead
 
 	// Overhead of a garbage collector object. Excludes memory manager block overhead.
-	gc_TotalOverhead = gc_ObjectOverhead
+	//gc_ObjectOverhead = gc_ObjectOverhead
 )
 
-type GCObject uintptr
-
-func (o GCObject) Ptr() Pointer {
-	return Pointer(o)
-}
+//type GCObject uintptr
+//
+//func (o GCObject) Ptr() Pointer {
+//	return Pointer(o)
+//}
 
 // GC is a Two-Color Mark & Sweep collector on top of a Two-Level Segmented Fit (Heap)
 // allocator built for TinyGo. Similar features to the internal extalloc GC in TinyGo
@@ -60,12 +59,25 @@ func (o GCObject) Ptr() Pointer {
 //
 // Relatively large TinyGo object graphs should still complete under 50 microseconds.
 type gc struct {
-	allocs      PointerSet
-	first, last uintptr
-	markGlobals markFn
-	markStack   markFn
+	//allocs uintptr
+	allocs PointerSet
+	//set1   PointerSet
+	//set2   PointerSet
+
+	first, last                       uintptr
+	maxPointersToScan                 uintptr
+	sleepQueue, runqueue, currentTask uintptr
+	heapStart, heapEnd                uintptr
+	globalsStart, globalsEnd          uintptr
+	envArgs                           uintptr
+	envArgsPointer                    uintptr
+	initGlobals                       bool
+	//markGlobals              markFn
+	//markStack                markFn
 	GCStats
 }
+
+var collector *gc
 
 type markFn func()
 
@@ -128,49 +140,135 @@ func (s *GCStats) Print() {
 	println("\tlast GC time:		", toMicros(s.LastGCTime), microsSuffix)
 }
 
+func PrintGCStats() {
+	collector.GCStats.Print()
+}
+
 func PrintDebugInfo() {
 	println("gc_ObjectOverhead	", uint(gc_ObjectOverhead))
 	println("gc_ObjectMaxSize		", uint(gc_ObjectMaxSize))
-	println("gc_TotalOverhead		", uint(gc_TotalOverhead))
+	println("gc_ObjectOverhead		", uint(gc_ObjectOverhead))
 }
 
 //goland:noinspection ALL
-func newGC(
+func initGC(
+	g *gc,
 	initialCapacity uintptr,
-	markGlobals, markStack markFn,
-) *gc {
-	gc := (*gc)(unsafe.Pointer(AllocZeroed(unsafe.Sizeof(gc{}))))
-	gc.allocs = NewPointerSet(initialCapacity)
-	gc.first = ^uintptr(0)
-	gc.last = 0
-	gc.markGlobals = markGlobals
-	gc.markStack = markStack
-	gc.Started = time.Now().UnixNano()
-	return gc
+	//markGlobals, markStack markFn,
+) {
+	//g := (*gc)(unsafe.Pointer(AllocZeroed(unsafe.Sizeof(gc{}))))
+	//g.set1 = NewPointerSet(initialCapacity)
+	//g.set2 = NewPointerSet(initialCapacity)
+	//g.allocs = uintptr(unsafe.Pointer(&g.set1))
+	g.allocs = NewPointerSet(initialCapacity)
+	g.first = ^uintptr(0)
+	g.last = 0
+	//g.markGlobals = markGlobals
+	//g.markStack = markStack
+	g.Started = time.Now().UnixNano()
 }
+
+////goland:noinspection ALL
+//func newGC(
+//	initialCapacity uintptr,
+//	markGlobals, markStack markFn,
+//) gc {
+//	g := (*gc)(unsafe.Pointer(AllocZeroed(unsafe.Sizeof(gc{}))))
+//	g.allocs = NewPointerSet(initialCapacity)
+//	g.first = ^uintptr(0)
+//	g.last = 0
+//	g.markGlobals = markGlobals
+//	g.markStack = markStack
+//	g.Started = time.Now().UnixNano()
+//	return g
+//}
 
 // GCObject Represents a managed object in memory, consisting of a header followed by the object's data.
 type gcObject struct {
-	cap    uintptr
+	//cap    uint32
 	color  uint32 // alloc.Pointer to the next object with color flags stored in the alignment bits.
 	rtSize uint32 // Runtime size.
+	//tag    uint32
+	//_      uint32
+	//_      uint32
 }
 
-// Gets the size of this object in memory.
-func (o *gcObject) size() uintptr {
-	return o.cap
-	//return tlsf.BlockOverhead + (o.MMInfo & ^uintptr(3))
+func (g *gc) isReserved(root uintptr) bool {
+	if root == 0 {
+		return true
+	}
+	switch root {
+	case g.runqueue:
+		println("runqueue")
+		return true
+	case g.sleepQueue:
+		println("sleepQueue")
+		return false
+	case g.currentTask:
+		println("currentTask")
+		return true
+	case g.heapStart:
+		println("heapStart")
+		return true
+	case g.heapEnd:
+		println("heapEnd")
+		return true
+	case g.globalsStart:
+		println("globalsStart")
+		return true
+	case g.globalsEnd:
+		println("globalsEnd")
+		return true
+	case g.envArgs:
+		println("envArgs")
+		return true
+	case g.envArgsPointer:
+		println("envArgsPointer")
+		return true
+	}
+	if root == uintptr(unsafe.Pointer(&collector)) {
+		println("isCollector")
+		return true
+	}
+	if root == uintptr(unsafe.Pointer(&g.allocs)) {
+		//println("isPointerSet")
+		return true
+	}
+	if root >= uintptr(unsafe.Pointer(&collector.allocs)) && root <= uintptr(unsafe.Pointer(&collector.GCStats.LiveBytes)) {
+		//println("is gc{}")
+		return true
+	}
+	if root == g.allocs.items {
+		//println("isPointerSet.items", uint(root), uint(g.allocs.items))
+		return true
+	}
+	//if root == g.sleepQueue {
+	//	//println("isSleepQueue")
+	//	return true
+	//}
+	if root == g.runqueue {
+		println("isRunqueue")
+		return true
+	}
+	return false
 }
 
 // MarkRoot marks a single pointer as a root
 //goland:noinspection ALL
-func (gc *gc) markRoot(root uintptr) {
-	//root = root.Add(-int(gc_TotalOverhead))
-	if root < gc.first || root > gc.last {
+func (g *gc) markRoot(root uintptr) {
+	if root == 0 {
 		return
 	}
-	root -= gc_TotalOverhead
-	if gc.allocs.Has(root) {
+	if g.isReserved(root) {
+		//println("markRoot isReserved", uint(root))
+		//return
+	}
+	//root = root.Add(-int(gc_ObjectOverhead))
+	root -= gc_ObjectOverhead
+	if root < g.first || root > g.last {
+		return
+	}
+	if g.allocs.Has(root) {
 		// Mark as gc_BLACK
 		(*(*gcObject)(unsafe.Pointer(root))).color = gc_BLACK
 	}
@@ -178,7 +276,7 @@ func (gc *gc) markRoot(root uintptr) {
 
 // MarkRoots scans a block of contiguous memory for root pointers.
 //goland:noinspection ALL
-func (gc *gc) markRoots(start, end uintptr) {
+func (g *gc) markRoots(start, end uintptr) {
 	if gc_TRACE {
 		println("MarkRoots", uint(start), uint(end))
 	}
@@ -190,22 +288,32 @@ func (gc *gc) markRoots(start, end uintptr) {
 		return
 	}
 
+	//if g.isReserved(start) {
+	//	println("!!!!!!!!")
+	//	(*gcObject)(unsafe.Pointer(start)).rtSize = gc_BLACK
+	//	return
+	//}
+
 	// Adjust to keep within range GC range
 	//println("MarkRoots", uint(start), uint(end))
 
 	// Align start and end pointers.
-	start = (uintptr(start) + unsafe.Alignof(unsafe.Pointer(nil)) - 1) &^ (unsafe.Alignof(unsafe.Pointer(nil)) - 1)
-	end &^= unsafe.Alignof(unsafe.Pointer(nil)) - 1
+	//start = (uintptr(start) + unsafe.Alignof(unsafe.Pointer(nil)) - 1) &^ (unsafe.Alignof(unsafe.Pointer(nil)) - 1)
+	//end &^= unsafe.Alignof(unsafe.Pointer(nil)) - 1
+
+	// Reduce the end bound to avoid reading too far on platforms where pointer alignment is smaller than pointer size.
+	// If the size of the range is 0, then end will be slightly below start after this.
+	end -= unsafe.Sizeof(end) - unsafe.Alignof(end)
 
 	// Mark all pointers.
-	for ptr := start; ptr < end; ptr += unsafe.Alignof(unsafe.Pointer(nil)) {
+	for ptr := start; ptr < end; ptr += unsafe.Alignof(ptr) {
 		p := *(*uintptr)(unsafe.Pointer(ptr))
-		gc.markRoot(p)
+		g.markRoot(p)
 	}
 }
 
 //goland:noinspection ALL
-func (gc *gc) markRecursive(root uintptr, depth int) {
+func (g *gc) markRecursive(root uintptr, depth int) {
 	// Are we too deep?
 	if depth > 64 {
 		return
@@ -217,103 +325,122 @@ func (gc *gc) markRecursive(root uintptr, depth int) {
 	obj := (*gcObject)(unsafe.Pointer(root))
 	if obj.color == gc_WHITE {
 		obj.color = gc_BLACK
+		if g.isReserved(root) {
+			//return
+		}
 
 		if gc_TRACE {
-			println(uint(root), "color", obj.color, "rtSize", obj.rtSize, "size", uint(obj.size()))
+			println(uint(root), "color", obj.color, "rtSize", obj.rtSize, "size", uint(obj.rtSize))
 		}
 		if uintptr(obj.rtSize)%unsafe.Sizeof(uintptr(0)) != 0 {
 			return
 		}
-		start := root + gc_TotalOverhead
+		start := root + gc_ObjectOverhead
 		end := start + uintptr(obj.rtSize)
 		//start = (start + unsafe.Alignof(unsafe.Pointer(nil)) - 1) &^ (unsafe.Alignof(unsafe.Pointer(nil)) - 1)
 		//end &^= unsafe.Alignof(unsafe.Pointer(nil)) - 1
 
-		for ptr := start; ptr < end; ptr += unsafe.Alignof(unsafe.Pointer(nil)) {
-			p := *(*uintptr)(unsafe.Pointer(ptr)) - gc_TotalOverhead
-			if p < gc.first || p > gc.last {
+		pointersToCount := (uint(end) - uint(start)) / uint(unsafe.Sizeof(unsafe.Pointer(nil)))
+		if pointersToCount > 256 {
+			//println("markRecursive -> huge object found", uint(pointersToCount), "pointers to scan")
+			//return
+		}
+
+		for ptr := start; ptr < end; ptr += unsafe.Alignof(ptr) {
+			p := *(*uintptr)(unsafe.Pointer(ptr)) - gc_ObjectOverhead
+			if p < g.first || p > g.last {
 				continue
 			}
-			if !gc.allocs.Has(p) {
+			if !g.allocs.Has(p) {
 				continue
 			}
-			gc.markRecursive(p, depth+1)
+			g.markRecursive(p, depth+1)
 		}
 	}
 }
 
 //goland:noinspection ALL
-func (gc *gc) markGraph(root uintptr) {
+func (g *gc) markGraph(root uintptr) {
 	var (
 		obj   = (*gcObject)(unsafe.Pointer(root))
-		start = root + gc_TotalOverhead
+		start = root + gc_ObjectOverhead
 		end   = start + uintptr(obj.rtSize)
 	)
 
-	// unaligned allocation must be some sort of string or data buffer. skip it.
-	if uintptr(obj.rtSize)%unsafe.Sizeof(uintptr(0)) != 0 {
-		return
-	}
+	// Reduce the end bound to avoid reading too far on platforms where pointer alignment is smaller than pointer size.
+	// If the size of the range is 0, then end will be slightly below start after this.
+	end -= unsafe.Sizeof(end) - unsafe.Alignof(end)
 
-	//pointersToCount := (uint(end) - uint(start)) / uint(unsafe.Sizeof(unsafe.Pointer(nil)))
-	//if pointersToCount > 4096 {
-	//	//println("huge object found", uint(pointersToCount), "pointers to scan")
+	// unaligned allocation must be some sort of string or data buffer. skip it.
+	//if uintptr(obj.rtSize)%unsafe.Sizeof(uintptr(0)) != 0 {
 	//	return
 	//}
 
+	pointersToCount := (uint(end) - uint(start)) / uint(unsafe.Sizeof(unsafe.Pointer(nil)))
+	if pointersToCount > 256 {
+		//println("markGraph -> huge object found", uint(pointersToCount), "pointers to scan")
+		//return
+	}
+	//println("scanning", uint(pointersToCount), "pointers to scan")
+
 	// Mark all pointers.
-	for ptr := start; ptr < end; ptr += unsafe.Alignof(unsafe.Pointer(nil)) {
-		p := *(*uintptr)(unsafe.Pointer(ptr)) - gc_TotalOverhead
-		if p < gc.first || p > gc.last {
+	for ptr := start; ptr < end; ptr += unsafe.Alignof(ptr) {
+		p := *(*uintptr)(unsafe.Pointer(ptr)) - gc_ObjectOverhead
+		if p < g.first || p > g.last {
 			continue
 		}
-		if !gc.allocs.Has(p) {
+		if !g.allocs.Has(p) {
 			continue
 		}
-		gc.markRecursive(p, 0)
+		g.markRecursive(p, 0)
 	}
 }
 
 // New allocates a new GC GCObject
 //goland:noinspection ALL
-func (gc *gc) New(size uintptr) uintptr {
+func (g *gc) New(size uintptr) uintptr {
 	// Is the size too large?
 	if size > uintptr(gc_ObjectMaxSize) {
 		panic("allocation too large")
 	}
+	//println("gc.New", uint(size))
 
 	// Allocate memory
-	p, c := AllocZeroedCap(gc_ObjectOverhead + size)
+	p := AllocZeroed(gc_ObjectOverhead + size)
+	if gc_TRACE {
+		println("gc.New AllocZeroed", uint(size), "cap", uint(SizeOf(p)), "ptr", uint(p))
+	}
+
 	obj := (*gcObject)(unsafe.Pointer(p))
 	if obj == nil {
 		return 0
 	}
 
 	// Add the runtime size and Add to gc_WHITE
-	obj.cap = c
+	//obj.cap = uint32(c)
 	obj.rtSize = uint32(size)
 	obj.color = gc_WHITE
-	gc.LiveBytes += obj.size()
-	gc.TotalBytes += int64(obj.size())
-	gc.Live++
-	gc.TotalAllocs++
+	g.LiveBytes += size
+	g.TotalBytes += int64(size)
+	g.Live++
+	g.TotalAllocs++
 
 	// Convert to uint pointer
 	ptr := uintptr(unsafe.Pointer(obj))
 
 	// Add to allocations map
-	gc.allocs.Add(ptr, 0)
+	g.allocs.Add(ptr, 0)
 
 	// Update first pointer if necessary
-	if ptr < gc.first {
-		gc.first = ptr
+	if ptr < g.first {
+		g.first = ptr
 	}
 	// Update last pointer if necessary
-	if ptr > gc.last {
-		gc.last = ptr
+	if ptr > g.last {
+		g.last = ptr
 	}
 
-	ptr += gc_TotalOverhead
+	ptr += gc_ObjectOverhead
 	//println("New", uint(ptr))
 
 	// Return pointer to data
@@ -322,37 +449,105 @@ func (gc *gc) New(size uintptr) uintptr {
 
 // Free will immediately remove the GC GCObject and free up the memory in the allocator.
 //goland:noinspection ALL
-func (gc *gc) Free(ptr uintptr) bool {
-	p := ptr - gc_TotalOverhead
+func (g *gc) Free(ptr uintptr) bool {
+	p := ptr - gc_ObjectOverhead
 	//if !gc.allocs.Has(p) {
-	if _, ok := gc.allocs.Delete(p); !ok {
+	if _, ok := g.allocs.Delete(p); !ok {
 		return false
 	}
 
 	if gc_TRACE {
 		println("GC free", uint(ptr))
 	}
+	if true {
+		return true
+	}
 
 	obj := (*gcObject)(unsafe.Pointer(p))
-	size := obj.size()
-	gc.LiveBytes -= size
-	gc.FreedBytes += int64(size)
-	gc.Live--
-	gc.Frees++
-	//gc.allocs.Delete(p)
+	size := obj.rtSize
+	g.LiveBytes -= uintptr(size)
+	g.FreedBytes += int64(size)
+	g.Live--
+	g.Frees++
+	g.allocs.Delete(p)
 
-	//println("GC free", uint(uintptr(ptr)), "size", uint(size), "rtSize", obj.rtSize)
+	if gc_TRACE {
+		println("GC free", uint(uintptr(ptr)), "size", uint(size), "rtSize", obj.rtSize)
+	}
 	Free(Pointer(p))
 
 	return true
 }
 
+func (g *gc) Realloc(ptr uintptr, size uintptr) uintptr {
+	if gc_TRACE {
+		println("tinygc.Realloc", uint(ptr), "size", uint(size))
+	}
+	ptr -= gc_ObjectOverhead
+	obj := (*gcObject)(Pointer(ptr).Unsafe())
+	if obj.rtSize >= uint32(size) {
+		if gc_TRACE {
+			println("tinygc.Realloc size fits existing", uint(ptr), "existingSize", obj.rtSize, "size", uint(size))
+		}
+		obj.rtSize = uint32(size)
+		return ptr
+	}
+	newPtr := Realloc(Pointer(ptr), size)
+	if uintptr(newPtr) == ptr {
+		if gc_TRACE {
+			println("tinygc.Realloc nogc.Realloc returned same pointer", uint(ptr), "existingSize", obj.rtSize, "size", uint(size))
+		}
+		return ptr
+	}
+
+	if _, ok := g.allocs.Delete(ptr); ok {
+		if gc_TRACE {
+			println("tinygc.Realloc freed previous pointer", uint(ptr), "size", uint(size))
+		}
+		g.LiveBytes -= uintptr(obj.rtSize)
+		g.FreedBytes += int64(obj.rtSize)
+		g.Live--
+		g.Frees++
+		Free(Pointer(ptr))
+	}
+
+	obj = (*gcObject)(newPtr.Unsafe())
+	if obj == nil {
+		return 0
+	}
+
+	// Add the runtime size and Add to gc_WHITE
+	//obj.cap = uint32(c)
+	obj.rtSize = uint32(size)
+	obj.color = gc_WHITE
+	g.LiveBytes += size
+	g.TotalBytes += int64(size)
+	g.Live++
+	g.TotalAllocs++
+
+	// Convert to uint pointer
+	ptr = uintptr(newPtr)
+
+	// Add to allocations map
+	g.allocs.Add(ptr, 0)
+
+	// Update first pointer if necessary
+	if ptr < g.first {
+		g.first = ptr
+	}
+	// Update last pointer if necessary
+	if ptr > g.last {
+		g.last = ptr
+	}
+
+	return ptr + gc_ObjectOverhead
+}
+
 //goland:noinspection ALL
-func (gc *gc) Collect() {
+func (g *gc) Collect() {
 	if gc_TRACE {
 		println("GC collect started...")
 	}
-	//println("tcmsCollect")
 	var (
 		start = time.Now().UnixNano()
 		k     uintptr
@@ -360,17 +555,15 @@ func (gc *gc) Collect() {
 		first = ^uintptr(0)
 		last  = uintptr(0)
 	)
-	gc.Cycles++
+	g.Cycles++
 
 	////////////////////////////////////////////////////////////////////////
 	// Mark Roots Phase
 	////////////////////////////////////////////////////////////////////////
-	if gc.markStack != nil {
-		gc.markStack()
-	}
-	if gc.markGlobals != nil {
-		gc.markGlobals()
-	}
+	markStack()
+	//doMarkStack()
+	doMarkGlobals()
+	//markScheduler()
 	// End of mark roots
 	end := time.Now().UnixNano()
 	markTime := end - start
@@ -379,11 +572,11 @@ func (gc *gc) Collect() {
 	// Mark Graph Phase
 	////////////////////////////////////////////////////////////////////////
 	start = end
-	gc.LastSweep = 0
-	gc.LastSweepBytes = 0
+	g.LastSweep = 0
+	g.LastSweepBytes = 0
 	var (
-		items     = gc.allocs.items
-		itemsSize = gc.allocs.size
+		items     = g.allocs.items
+		itemsSize = g.allocs.size
 		itemsEnd  = items + (itemsSize * unsafe.Sizeof(pointerSetItem{}))
 	)
 	for ; items < itemsEnd; items += unsafe.Sizeof(pointerSetItem{}) {
@@ -391,7 +584,7 @@ func (gc *gc) Collect() {
 		if k == 0 {
 			continue
 		}
-		gc.markGraph(k)
+		g.markGraph(k)
 	}
 
 	// End of mark graph
@@ -404,8 +597,8 @@ func (gc *gc) Collect() {
 	start = markGraphTime + start
 
 	// Reset items iterator
-	items = gc.allocs.items
-	itemsSize = gc.allocs.size
+	items = g.allocs.items
+	itemsSize = g.allocs.size
 	itemsEnd = items + (itemsSize * unsafe.Sizeof(pointerSetItem{}))
 	for ; items < itemsEnd; items += unsafe.Sizeof(pointerSetItem{}) {
 		// dereference pointer
@@ -418,25 +611,26 @@ func (gc *gc) Collect() {
 		obj = (*gcObject)(unsafe.Pointer(k))
 		// free all gc_WHITE objects
 		if obj.color == gc_WHITE {
-			gc.LiveBytes -= obj.size()
-			gc.LastSweepBytes += int64(obj.size())
-			gc.Live--
-			gc.LastSweep++
+			g.LiveBytes -= uintptr(obj.rtSize)
+			g.LastSweepBytes += int64(obj.rtSize)
+			g.Live--
+			g.LastSweep++
 
 			if gc_TRACE {
-				println("GC sweep", uint(k), "size", uint(obj.size()))
+				println("GC sweep", uint(k), "size", uint(obj.rtSize))
 			}
+			println("GC sweep", uint(k), "size", uint(obj.rtSize))
 
-			//println("GC sweep", uint(uintptr(k)+gc_TotalOverhead), "size", uint(obj.size()), "rtSize", obj.rtSize)
+			//println("GC sweep", uint(uintptr(k)+gc_ObjectOverhead), "size", uint(obj.size()), "rtSize", obj.rtSize)
 
 			// Free memory
-			Free(Pointer(k))
+			//Free(Pointer(k))
 
 			// Remove from alloc map
-			gc.allocs.Delete(k)
+			g.allocs.Delete(k)
 			//items -= unsafe.Sizeof(pointerSetItem{})
 		} else { // turn all gc_BLACK objects into gc_WHITE objects
-			//k += gc_TotalOverhead
+			//k += gc_ObjectOverhead
 			if k < first {
 				first = k
 			}
@@ -450,18 +644,18 @@ func (gc *gc) Collect() {
 		}
 	}
 
-	gc.first = first
-	gc.last = last
+	g.first = first
+	g.last = last
 	end = time.Now().UnixNano()
 	sweepTime := end - start
-	gc.LastMarkRootsTime = markTime
-	gc.LastMarkGraphTime = markGraphTime
-	gc.LastSweepTime = sweepTime
-	gc.SweepTime += sweepTime
-	gc.SweepBytes += gc.LastSweepBytes
-	gc.Sweeps += gc.LastSweep
-	gc.LastGCTime = markTime + markGraphTime + sweepTime
-	gc.TotalTime += gc.LastGCTime
+	g.LastMarkRootsTime = markTime
+	g.LastMarkGraphTime = markGraphTime
+	g.LastSweepTime = sweepTime
+	g.SweepTime += sweepTime
+	g.SweepBytes += g.LastSweepBytes
+	g.Sweeps += g.LastSweep
+	g.LastGCTime = markTime + markGraphTime + sweepTime
+	g.TotalTime += g.LastGCTime
 
 	if gc_TRACE {
 		println("GC collect finished")

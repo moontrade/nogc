@@ -70,9 +70,17 @@ func earlyExit(args []wasmer.Value) ([]wasmer.Value, error) {
 //}
 
 func main() {
-	dylib, err := os.ReadFile("../wasm-local/main.dylib")
+	//dylib, err := os.ReadFile("../wasm-local/main.dylib")
+	//if err != nil {
+	//	dylib, err = os.ReadFile("../wasm/main.dylib")
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//}
+
+	dylib, err := os.ReadFile("../wasm-local/main.wasm")
 	if err != nil {
-		dylib, err = os.ReadFile("../wasm/main.dylib")
+		dylib, err = os.ReadFile("../wasm/main.wasm")
 		if err != nil {
 			panic(err)
 		}
@@ -80,15 +88,16 @@ func main() {
 
 	// Create an Engine
 	engine := wasmer.NewEngineWithConfig(wasmer.NewConfig().
-		UseDylibEngine(),
+		UseCraneliftCompiler(),
+	//UseDylibEngine(),
 	)
 
 	// Create a Store
 	store := wasmer.NewStore(engine)
 
 	fmt.Println("Compiling module...")
-	module, err := wasmer.DeserializeModule(store, dylib)
-	//module, err := wasmer.NewModule(store, dylib)
+	//module, err := wasmer.DeserializeModule(store, dylib)
+	module, err := wasmer.NewModule(store, dylib)
 
 	if err != nil {
 		fmt.Println("Failed to compile module:", err)
@@ -96,7 +105,7 @@ func main() {
 
 	env, err := wasmer.NewWasiStateBuilder("main").
 		Argument("-conf hi").
-		//Argument("-port 80").
+		Argument("-port 80").
 		CaptureStderr().
 		CaptureStdout().
 		Finalize()

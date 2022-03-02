@@ -101,7 +101,7 @@ const (
 	// 64bit = 3
 	// <expr> = bits.UintSize / 8 / 4 + 1
 	_TLSFAlignSizeLog2 uintptr = ((32 << (^uint(0) >> 63)) / 8 / 4) + 1
-	_TLSFSizeofPointer         = uintptr(unsafe.Sizeof(uintptr(0)))
+	_TLSFSizeofPointer         = unsafe.Sizeof(uintptr(0))
 
 	ALBits uint32  = 4 // 16 bytes to fit up to v128
 	ALSize uintptr = 1 << uintptr(ALBits)
@@ -188,6 +188,11 @@ func (a *Heap) Free(ptr uintptr) {
 	a.freeBlock(checkUsedBlock(ptr))
 }
 
+//goland:noinspection GoVetUnsafePointer
+func SizeOf(ptr uintptr) uintptr {
+	return ((*tlsfBlock)(unsafe.Pointer(ptr - BlockOverhead))).MMInfo & ^TagsMask
+}
+
 // Bootstrap bootstraps the Allocator with the initial block of contiguous memory
 // that at least fits the minimum required to fit the bitmap.
 //goland:noinspection GoVetUnsafePointer
@@ -195,7 +200,7 @@ func Bootstrap(start, end uintptr, pages int32, grow Grow) *Heap {
 	start = (start + unsafe.Alignof(unsafe.Pointer(nil)) - 1) &^ (unsafe.Alignof(unsafe.Pointer(nil)) - 1)
 
 	//if a.T {
-	//	println("Bootstrap", "pages", pages, uint(start), uint(end), uint(end-start))
+	//println("Bootstrap", "pages", pages, uint(start), uint(end), uint(end-start))
 	//}
 	// init allocator
 	a := (*Heap)(unsafe.Pointer(start))
@@ -210,7 +215,7 @@ func Bootstrap(start, end uintptr, pages int32, grow Grow) *Heap {
 	}
 
 	// init root
-	rootOffset := uintptr(unsafe.Sizeof(Heap{})) + ((start + ALMask) & ^ALMask)
+	rootOffset := unsafe.Sizeof(Heap{}) + ((start + ALMask) & ^ALMask)
 	a.root = (*root)(unsafe.Pointer(rootOffset))
 	a.root.init()
 
@@ -714,9 +719,11 @@ func (a *Heap) allocateBlock(size uintptr) *tlsfBlock {
 }
 
 func (a *Heap) reallocateBlock(block *tlsfBlock, size uintptr) *tlsfBlock {
-	var payloadSize = prepareSize(size)
-	var blockInfo = block.MMInfo
-	var blockSize = blockInfo & ^TagsMask
+	var (
+		payloadSize = prepareSize(size)
+		blockInfo   = block.MMInfo
+		blockSize   = blockInfo & ^TagsMask
+	)
 
 	// possibly split and update runtime size if it still fits
 	if payloadSize <= blockSize {
@@ -755,7 +762,7 @@ func (a *Heap) moveBlock(block *tlsfBlock, newSize uintptr) *tlsfBlock {
 
 	Copy(unsafe.Pointer(uintptr(unsafe.Pointer(newBlock))+BlockOverhead),
 		unsafe.Pointer(uintptr(unsafe.Pointer(block))+BlockOverhead),
-		uintptr(block.MMInfo & ^TagsMask))
+		block.MMInfo & ^TagsMask)
 
 	a.freeBlock(block)
 	//maybeFreeBlock(a, block)
@@ -799,11 +806,6 @@ func checkUsedBlock(ptr uintptr) *tlsfBlock {
 		panic("used block is not valid to be freed or reallocated")
 	}
 	return block
-}
-
-//goland:noinspection GoVetUnsafePointer
-func SizeOf(ptr uintptr) uintptr {
-	return ((*tlsfBlock)(unsafe.Pointer(ptr - BlockOverhead))).MMInfo & ^TagsMask
 }
 
 func PrintDebugInfo() {

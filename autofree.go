@@ -119,7 +119,7 @@ func (af *AutoFree) add(ptr Pointer) {
 	}
 	if n.len == h.max {
 		nextPtr, sz := AllocCap(unsafe.Sizeof(autoNode{}) + (h.max * unsafe.Sizeof(Pointer(0))))
-		h.bytes += sz + SizeOf(ptr)
+		h.bytes += sz + Sizeof(ptr)
 		next := (*autoNode)(nextPtr.Unsafe())
 		// Add length to 1
 		next.len = 1
@@ -130,7 +130,7 @@ func (af *AutoFree) add(ptr Pointer) {
 		// Add first item
 		*(*uintptr)(unsafe.Pointer(&next.first)) = uintptr(ptr)
 	} else {
-		h.bytes += SizeOf(ptr)
+		h.bytes += Sizeof(ptr)
 		// Add item
 		*(*Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(&n.first)) + (n.len * unsafe.Sizeof(uintptr(0))))) = ptr
 		// Increment length

@@ -13,43 +13,27 @@ import (
 ////export stub
 //func stub() {}
 
+type Order struct {
+	Name string
+}
+
 func main() {
 	var done = make(chan bool, 1)
 	//mem.IsPowerOfTwo(0)
 	println("hi moontrade!")
-	var gb []byte = make([]byte, 9000)
+	var gb = make([]byte, 9000)
 	_ = gb
 
-	go func() {
-		//var b []byte
-		//
-		//if b == nil {
-		//}
-		b := make([]byte, 24000)
-		for {
-
-			b[0] = 10
-			b[1]++
-			_ = b
-			println("b address", uint(uintptr(unsafe.Pointer(&b))), uint(uintptr(unsafe.Pointer(&b[0]))))
-			time.Sleep(time.Second)
-
-			gb[0]++
-
-			if false {
-				break
-			}
-		}
-
-		b[0]--
-		println("waiting for done")
-		<-done
-	}()
+	//go func() {
+	//	println("task 1 done")
+	//}()
+	//
+	go run()
 
 	go func() {
 		count := 0
+		bb := make([]byte, 2048)
 		for {
-			bb := make([]byte, 2048)
 			count++
 			//nogc.Scope(func(a nogc.AutoFree) {
 			//	a.Alloc(512)
@@ -81,4 +65,34 @@ func main() {
 	close(done)
 
 	println("done")
+}
+
+func run() {
+	//var b []byte
+	//
+	//if b == nil {
+	//}
+	b := make([]byte, 24000)
+	d := make([]*Order, 16384)
+	_ = d
+	for {
+
+		b[0] = 10
+		b[1]++
+		_ = b
+		println("b address", uint(uintptr(unsafe.Pointer(&b))), uint(uintptr(unsafe.Pointer(&b[0]))))
+		time.Sleep(time.Second)
+
+		d[0] = nil
+		if d[1] != nil {
+
+		}
+
+		//if false {
+		//	break
+		//}
+	}
+
+	b[0]--
+	println("waiting for done")
 }

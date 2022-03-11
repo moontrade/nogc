@@ -47,8 +47,9 @@ func gcInitHeap(heapStart, heapEnd uintptr) {
 //go:linkname gcAlloc runtime.gcAlloc
 func gcAlloc(size uintptr, layout unsafe.Pointer) unsafe.Pointer {
 	if gc_TRACE {
-		println("gcAlloc", uint(size))
+		println("gcAlloc", uint(size), uint(uintptr(layout)))
 	}
+	println("gcAlloc", uint(size), uint(uintptr(layout)))
 
 	//ptr := AllocZeroed(size)
 	ptr := collector.New(size)
@@ -169,7 +170,6 @@ func gcMarkGlobals(start, end uintptr) {
 		println("gcMarkGlobals", uint(start), uint(end))
 	}
 	//println("gcMarkGlobals", uint(start), uint(end))
-	//println("gc struct", uint(uintptr(unsafe.Pointer(&collector))), uint(uintptr(unsafe.Pointer(&collector)))+uint(unsafe.Sizeof(gc{})))
 	collector.markRoots(start, end)
 }
 
@@ -189,7 +189,12 @@ func gcMarkStackObject(start, end uintptr) {
 	if gc_TRACE {
 		println("gcMarkStackObject", uint(start), uint(end))
 	}
-	println("gcMarkStackObject", uint(start), uint(end))
+
+	//println("gcMarkStackObject", uint(start), uint(end))
+	//for ptr := start; ptr < end; ptr += unsafe.Alignof(ptr) {
+	//	p := *(*uintptr)(unsafe.Pointer(ptr)) - gc_ObjectOverhead
+	//	println("stack slot", uint(ptr), "value", uint(p))
+	//}
 	collector.markRoots(start, end)
 }
 

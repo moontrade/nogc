@@ -66,14 +66,14 @@ func Free(p Pointer) {
 }
 
 ////export malloc_usable_size
-func SizeOf(p Pointer) uintptr {
+func Sizeof(p Pointer) uintptr {
 	return uintptr(tlsf.SizeOf(uintptr(p)))
 }
 
 func Scope(fn func(a AutoFree)) {
 	a := NewAuto(32)
+	defer a.Free()
 	fn(a)
-	a.Free()
 }
 
 //// Scope creates an AutoFree free list that automatically reclaims memory

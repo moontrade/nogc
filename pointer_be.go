@@ -37,30 +37,30 @@ func (p Pointer) SetInt16LE(offset int, v int16) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt16 Big Endian
+// Uint16 Big Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt16BE(offset int) uint16 {
+func (p Pointer) Uint16BE(offset int) uint16 {
 	return *(*uint16)(unsafe.Pointer(uintptr(int(p) + offset)))
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt16BE(offset int, v uint16) {
+func (p Pointer) SetUint16BE(offset int, v uint16) {
 	*(*uint16)(unsafe.Pointer(uintptr(int(p) + offset))) = v
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt16 Little Endian
+// Uint16 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt16LE(offset int) uint16 {
+func (p Pointer) Uint16LE(offset int) uint16 {
 	return bits.ReverseBytes16(*(*uint16)(unsafe.Pointer(uintptr(int(p) + offset))))
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt16LE(offset int, v uint16) {
+func (p Pointer) SetUint16LE(offset int, v uint16) {
 	*(*uint16)(unsafe.Pointer(uintptr(int(p) + offset))) = bits.ReverseBytes16(v)
 }
 
@@ -93,30 +93,30 @@ func (p Pointer) SetInt32LE(offset int, v int32) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt32 Big Endian
+// Uint32 Big Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt32BE(offset int) uint32 {
+func (p Pointer) Uint32BE(offset int) uint32 {
 	return *(*uint32)(unsafe.Pointer(uintptr(int(p) + offset)))
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt32BE(offset int, v uint32) {
+func (p Pointer) SetUint32BE(offset int, v uint32) {
 	*(*uint32)(unsafe.Pointer(uintptr(int(p) + offset))) = v
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt32 Little Endian
+// Uint32 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt32LE(offset int) uint32 {
+func (p Pointer) Uint32LE(offset int) uint32 {
 	return bits.ReverseBytes32(*(*uint32)(unsafe.Pointer(uintptr(int(p) + offset))))
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt32LE(offset int, v uint32) {
+func (p Pointer) SetUint32LE(offset int, v uint32) {
 	*(*uint32)(unsafe.Pointer(uintptr(int(p) + offset))) = bits.ReverseBytes32(v)
 }
 
@@ -149,30 +149,30 @@ func (p Pointer) SetInt64LE(offset int, v int64) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt64 Big Endian
+// Uint64 Big Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt64BE(offset int) uint64 {
+func (p Pointer) Uint64BE(offset int) uint64 {
 	return *(*uint64)(unsafe.Pointer(uintptr(int(p) + offset)))
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt64BE(offset int, v uint64) {
+func (p Pointer) SetUint64BE(offset int, v uint64) {
 	*(*uint64)(unsafe.Pointer(uintptr(int(p) + offset))) = v
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt64 Little Endian
+// Uint64 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt64LE(offset int) uint64 {
+func (p Pointer) Uint64LE(offset int) uint64 {
 	return bits.ReverseBytes64(*(*uint64)(unsafe.Pointer(uintptr(int(p) + offset))))
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt64LE(offset int, v uint64) {
+func (p Pointer) SetUint64LE(offset int, v uint64) {
 	*(*uint64)(unsafe.Pointer(uintptr(int(p) + offset))) = bits.ReverseBytes64(v)
 }
 
@@ -247,17 +247,17 @@ func (p Pointer) SetInt24(offset int, v int32) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt24 Native Endian
+// Uint24 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt24(offset int) uint32 {
-	return p.UInt24BE(offset)
+func (p Pointer) Uint24(offset int) uint32 {
+	return p.Uint24BE(offset)
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt24(offset int, v uint32) {
-	p.SetUInt24BE(offset, v)
+func (p Pointer) SetUint24(offset int, v uint32) {
+	p.SetUint24BE(offset, v)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -275,17 +275,17 @@ func (p Pointer) SetInt40(offset int, v int64) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt40 Native Endian
+// Uint40 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt40(offset int) uint64 {
-	return p.UInt40BE(offset)
+func (p Pointer) Uint40(offset int) uint64 {
+	return p.Uint40BE(offset)
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt40(offset int, v uint64) {
-	p.SetUInt40BE(offset, v)
+func (p Pointer) SetUint40(offset int, v uint64) {
+	p.SetUint40BE(offset, v)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,17 +303,17 @@ func (p Pointer) SetInt48(offset int, v int64) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt48 Native Endian
+// Uint48 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt48(offset int) uint64 {
-	return p.UInt48BE(offset)
+func (p Pointer) Uint48(offset int) uint64 {
+	return p.Uint48BE(offset)
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt48(offset int, v uint64) {
-	p.SetUInt48BE(offset, v)
+func (p Pointer) SetUint48(offset int, v uint64) {
+	p.SetUint48BE(offset, v)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,15 +331,15 @@ func (p Pointer) SetInt56(offset int, v int64) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// UInt56 Native Endian
+// Uint56 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) UInt56(offset int) uint64 {
-	return p.UInt56BE(offset)
+func (p Pointer) Uint56(offset int) uint64 {
+	return p.Uint56BE(offset)
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (p Pointer) SetUInt56(offset int, v uint64) {
-	p.SetUInt56BE(offset, v)
+func (p Pointer) SetUint56(offset int, v uint64) {
+	p.SetUint56BE(offset, v)
 }

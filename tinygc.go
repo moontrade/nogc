@@ -256,22 +256,31 @@ func (g *gc) isReserved(root uintptr) bool {
 // MarkRoot marks a single pointer as a root
 //goland:noinspection ALL
 func (g *gc) markRoot(root uintptr) {
-	if root == 0 {
-		return
-	}
-	if g.isReserved(root) {
-		//println("markRoot isReserved", uint(root))
-		//return
-	}
+	//if root == 0 {
+	//	return
+	//}
+	//if g.isReserved(root) {
+	//	//println("markRoot isReserved", uint(root))
+	//	//return
+	//}
 	//root = root.Add(-int(gc_ObjectOverhead))
-	root -= gc_ObjectOverhead
-	if root < g.first || root > g.last {
-		return
-	}
+	//root -= gc_ObjectOverhead
+	//if root < g.first || root > g.last {
+	//	return
+	//}
 	if g.allocs.Has(root) {
+		obj := (*gcObject)(Pointer(root - gc_ObjectOverhead).Unsafe())
 		// Mark as gc_BLACK
-		(*(*gcObject)(unsafe.Pointer(root))).color = gc_BLACK
+		//obj.color = gc_BLACK
+		println("markRoot", uint(root), "size", obj.rtSize)
+		//(*(*gcObject)(unsafe.Pointer(root - gc_ObjectOverhead))).color = gc_BLACK
+		//g.markGraph(root)
+		g.markRecursive(root, 0)
 	}
+	//else if g.allocs.Has(root + gc_ObjectOverhead) {
+	//	(*(*gcObject)(unsafe.Pointer(root))).color = gc_BLACK
+	//	println("!!!!!!!!!")
+	//}
 }
 
 // MarkRoots scans a block of contiguous memory for root pointers.
@@ -281,12 +290,12 @@ func (g *gc) markRoots(start, end uintptr) {
 		println("MarkRoots", uint(start), uint(end))
 	}
 
-	if end <= start {
-		return
-	}
-	if start == 0 || end == 0 {
-		return
-	}
+	//if end <= start {
+	//	return
+	//}
+	//if start == 0 || end == 0 {
+	//	return
+	//}
 
 	//if g.isReserved(start) {
 	//	println("!!!!!!!!")
@@ -308,6 +317,11 @@ func (g *gc) markRoots(start, end uintptr) {
 	// Mark all pointers.
 	for ptr := start; ptr < end; ptr += unsafe.Alignof(ptr) {
 		p := *(*uintptr)(unsafe.Pointer(ptr))
+
+		//if g.allocs.Has(p) {
+		//	// Mark as gc_BLACK
+		//	(*(*gcObject)(unsafe.Pointer(p - gc_ObjectOverhead))).color = gc_BLACK
+		//}
 		g.markRoot(p)
 	}
 }
@@ -315,30 +329,35 @@ func (g *gc) markRoots(start, end uintptr) {
 //goland:noinspection ALL
 func (g *gc) markRecursive(root uintptr, depth int) {
 	// Are we too deep?
-	if depth > 64 {
+	if depth > 256 {
 		return
 	}
-
 	if gc_TRACE {
 		println("markRecursive", uint(root), "depth", depth)
 	}
-	obj := (*gcObject)(unsafe.Pointer(root))
+	obj := (*gcObject)(unsafe.Pointer(root - gc_ObjectOverhead))
 	if obj.color == gc_WHITE {
+		println("markRecursive", uint(root), "size", uint(obj.rtSize), "depth", depth)
 		obj.color = gc_BLACK
-		if g.isReserved(root) {
-			//return
-		}
+		//if g.isReserved(root) {
+		//	//return
+		//}
 
 		if gc_TRACE {
 			println(uint(root), "color", obj.color, "rtSize", obj.rtSize, "size", uint(obj.rtSize))
 		}
-		if uintptr(obj.rtSize)%unsafe.Sizeof(uintptr(0)) != 0 {
-			return
-		}
-		start := root + gc_ObjectOverhead
+		//if uintptr(obj.rtSize)%unsafe.Sizeof(uintptr(0)) != 0 {
+		//	return
+		//}
+		start := root // + gc_ObjectOverhead
 		end := start + uintptr(obj.rtSize)
+
 		//start = (start + unsafe.Alignof(unsafe.Pointer(nil)) - 1) &^ (unsafe.Alignof(unsafe.Pointer(nil)) - 1)
 		//end &^= unsafe.Alignof(unsafe.Pointer(nil)) - 1
+
+		// Reduce the end bound to avoid reading too far on platforms where pointer alignment is smaller than pointer size.
+		// If the size of the range is 0, then end will be slightly below start after this.
+		end -= unsafe.Sizeof(end) - unsafe.Alignof(end)
 
 		pointersToCount := (uint(end) - uint(start)) / uint(unsafe.Sizeof(unsafe.Pointer(nil)))
 		if pointersToCount > 256 {
@@ -347,10 +366,10 @@ func (g *gc) markRecursive(root uintptr, depth int) {
 		}
 
 		for ptr := start; ptr < end; ptr += unsafe.Alignof(ptr) {
-			p := *(*uintptr)(unsafe.Pointer(ptr)) - gc_ObjectOverhead
-			if p < g.first || p > g.last {
-				continue
-			}
+			p := *(*uintptr)(unsafe.Pointer(ptr)) // - gc_ObjectOverhead
+			//if p < g.first || p > g.last {
+			//	continue
+			//}
 			if !g.allocs.Has(p) {
 				continue
 			}
@@ -361,11 +380,24 @@ func (g *gc) markRecursive(root uintptr, depth int) {
 
 //goland:noinspection ALL
 func (g *gc) markGraph(root uintptr) {
+	if !g.allocs.Has(root) {
+		println("Not has markGraph", uint(root))
+		return
+	}
 	var (
-		obj   = (*gcObject)(unsafe.Pointer(root))
-		start = root + gc_ObjectOverhead
+		obj   = (*gcObject)(unsafe.Pointer(root - gc_ObjectOverhead))
+		start = root // + gc_ObjectOverhead
 		end   = start + uintptr(obj.rtSize)
 	)
+
+	if obj.color == gc_WHITE {
+		println("\tWHITE", uint(obj.rtSize))
+		return
+	} else {
+		println("\tBLACK", uint(obj.rtSize))
+	}
+
+	//obj.color = gc_BLACK
 
 	// Reduce the end bound to avoid reading too far on platforms where pointer alignment is smaller than pointer size.
 	// If the size of the range is 0, then end will be slightly below start after this.
@@ -385,10 +417,10 @@ func (g *gc) markGraph(root uintptr) {
 
 	// Mark all pointers.
 	for ptr := start; ptr < end; ptr += unsafe.Alignof(ptr) {
-		p := *(*uintptr)(unsafe.Pointer(ptr)) - gc_ObjectOverhead
-		if p < g.first || p > g.last {
-			continue
-		}
+		p := *(*uintptr)(unsafe.Pointer(ptr)) // - gc_ObjectOverhead
+		//if p < g.first || p > g.last {
+		//	continue
+		//}
 		if !g.allocs.Has(p) {
 			continue
 		}
@@ -408,10 +440,10 @@ func (g *gc) New(size uintptr) uintptr {
 	// Allocate memory
 	p := AllocZeroed(gc_ObjectOverhead + size)
 	if gc_TRACE {
-		println("gc.New AllocZeroed", uint(size), "cap", uint(SizeOf(p)), "ptr", uint(p))
+		println("gc.New AllocZeroed", uint(size), "cap", uint(Sizeof(p)), "ptr", uint(p))
 	}
 
-	obj := (*gcObject)(unsafe.Pointer(p))
+	obj := (*gcObject)(p.Unsafe())
 	if obj == nil {
 		return 0
 	}
@@ -426,7 +458,7 @@ func (g *gc) New(size uintptr) uintptr {
 	g.TotalAllocs++
 
 	// Convert to uint pointer
-	ptr := uintptr(unsafe.Pointer(obj))
+	ptr := uintptr(unsafe.Pointer(obj)) + gc_ObjectOverhead
 
 	// Add to allocations map
 	g.allocs.Add(ptr, 0)
@@ -440,7 +472,7 @@ func (g *gc) New(size uintptr) uintptr {
 		g.last = ptr
 	}
 
-	ptr += gc_ObjectOverhead
+	//ptr += gc_ObjectOverhead
 	//println("New", uint(ptr))
 
 	// Return pointer to data
@@ -450,31 +482,28 @@ func (g *gc) New(size uintptr) uintptr {
 // Free will immediately remove the GC GCObject and free up the memory in the allocator.
 //goland:noinspection ALL
 func (g *gc) Free(ptr uintptr) bool {
-	p := ptr - gc_ObjectOverhead
+	//p := ptr // - gc_ObjectOverhead
 	//if !gc.allocs.Has(p) {
-	if _, ok := g.allocs.Delete(p); !ok {
+	if _, ok := g.allocs.Delete(ptr); !ok {
 		return false
 	}
 
 	if gc_TRACE {
 		println("GC free", uint(ptr))
 	}
-	if true {
-		return true
-	}
 
-	obj := (*gcObject)(unsafe.Pointer(p))
+	obj := (*gcObject)(unsafe.Pointer(ptr - gc_ObjectOverhead))
 	size := obj.rtSize
 	g.LiveBytes -= uintptr(size)
 	g.FreedBytes += int64(size)
 	g.Live--
 	g.Frees++
-	g.allocs.Delete(p)
 
 	if gc_TRACE {
 		println("GC free", uint(uintptr(ptr)), "size", uint(size), "rtSize", obj.rtSize)
 	}
-	Free(Pointer(p))
+
+	Free(Pointer(unsafe.Pointer(obj)))
 
 	return true
 }
@@ -483,8 +512,12 @@ func (g *gc) Realloc(ptr uintptr, size uintptr) uintptr {
 	if gc_TRACE {
 		println("tinygc.Realloc", uint(ptr), "size", uint(size))
 	}
-	ptr -= gc_ObjectOverhead
-	obj := (*gcObject)(Pointer(ptr).Unsafe())
+	println("tinygc.Realloc", uint(ptr), "size", uint(size))
+	if !g.allocs.Has(ptr) {
+		return g.New(size)
+	}
+	//ptr -= gc_ObjectOverhead
+	obj := (*gcObject)(Pointer(ptr - gc_ObjectOverhead).Unsafe())
 	if obj.rtSize >= uint32(size) {
 		if gc_TRACE {
 			println("tinygc.Realloc size fits existing", uint(ptr), "existingSize", obj.rtSize, "size", uint(size))
@@ -492,7 +525,7 @@ func (g *gc) Realloc(ptr uintptr, size uintptr) uintptr {
 		obj.rtSize = uint32(size)
 		return ptr
 	}
-	newPtr := Realloc(Pointer(ptr), size)
+	newPtr := Realloc(Pointer(ptr-gc_ObjectOverhead), size)
 	if uintptr(newPtr) == ptr {
 		if gc_TRACE {
 			println("tinygc.Realloc nogc.Realloc returned same pointer", uint(ptr), "existingSize", obj.rtSize, "size", uint(size))
@@ -526,7 +559,7 @@ func (g *gc) Realloc(ptr uintptr, size uintptr) uintptr {
 	g.TotalAllocs++
 
 	// Convert to uint pointer
-	ptr = uintptr(newPtr)
+	ptr = uintptr(newPtr) + gc_ObjectOverhead
 
 	// Add to allocations map
 	g.allocs.Add(ptr, 0)
@@ -540,7 +573,7 @@ func (g *gc) Realloc(ptr uintptr, size uintptr) uintptr {
 		g.last = ptr
 	}
 
-	return ptr + gc_ObjectOverhead
+	return ptr
 }
 
 //goland:noinspection ALL
@@ -584,7 +617,9 @@ func (g *gc) Collect() {
 		if k == 0 {
 			continue
 		}
-		g.markGraph(k)
+		obj := (*gcObject)(Pointer(k - gc_ObjectOverhead).Unsafe())
+		println("item", uint(k), "size", obj.rtSize, "color", obj.color)
+		//g.markGraph(k)
 	}
 
 	// End of mark graph
@@ -608,7 +643,7 @@ func (g *gc) Collect() {
 			continue
 		}
 		// cast to object
-		obj = (*gcObject)(unsafe.Pointer(k))
+		obj = (*gcObject)(unsafe.Pointer(k - gc_ObjectOverhead))
 		// free all gc_WHITE objects
 		if obj.color == gc_WHITE {
 			g.LiveBytes -= uintptr(obj.rtSize)

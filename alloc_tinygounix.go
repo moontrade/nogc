@@ -71,7 +71,7 @@ func Free(p Pointer) {
 	rpmalloc.Free(uintptr(p))
 }
 
-func SizeOf(ptr Pointer) uintptr {
+func Sizeof(ptr Pointer) uintptr {
 	return rpmalloc.UsableSize(uintptr(ptr))
 }
 

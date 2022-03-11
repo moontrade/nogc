@@ -380,29 +380,29 @@ func (s *Bytes) appendInt(maxLength int, value int64, base int) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt
+// Uint
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt(offset int) int {
+func (s *Bytes) Uint(offset int) int {
 	s.EnsureLen(offset + int(unsafe.Sizeof(uint(0))))
 	return s.Pointer.Int(offset)
 }
 
-func (s *Bytes) SetUInt(offset int, value uint) {
+func (s *Bytes) SetUint(offset int, value uint) {
 	s.EnsureLen(offset + int(unsafe.Sizeof(uint(0))))
-	s.Pointer.SetUInt(offset, value)
+	s.Pointer.SetUint(offset, value)
 }
 
 //goland:noinspection GoVetUnsafePointer
-func (s *Bytes) AppendUInt(value uint) {
-	s.Pointer.SetUInt(s.ensureAppend(int(unsafe.Sizeof(uint(0)))), value)
+func (s *Bytes) AppendUint(value uint) {
+	s.Pointer.SetUint(s.ensureAppend(int(unsafe.Sizeof(uint(0)))), value)
 }
 
-func (s *Bytes) AppendUIntString(value uint) {
-	s.appendUInt(20, uint64(value), 10)
+func (s *Bytes) AppendUintString(value uint) {
+	s.appendUint(20, uint64(value), 10)
 }
 
-func (s *Bytes) appendUInt(maxLength int, value uint64, base int) {
+func (s *Bytes) appendUint(maxLength int, value uint64, base int) {
 	l := s.Len()
 	s.EnsureCap(l + maxLength)
 	s.setLen(l + len(strconv.AppendUint(s.Pointer.Bytes(l, maxLength, maxLength), value, base)))
@@ -467,26 +467,26 @@ func (s *Bytes) AppendInt8String(value int8) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt8
+// Uint8
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt8(offset int) uint8 {
+func (s *Bytes) Uint8(offset int) uint8 {
 	s.EnsureLen(offset + 1)
-	return s.Pointer.UInt8(offset)
+	return s.Pointer.Uint8(offset)
 }
 
-// SetUInt8 is safe version. Will grow allocation if needed.
-func (s *Bytes) SetUInt8(offset int, value uint8) {
+// SetUint8 is safe version. Will grow allocation if needed.
+func (s *Bytes) SetUint8(offset int, value uint8) {
 	s.EnsureLen(offset + 1)
-	s.Pointer.SetUInt8(offset, value)
+	s.Pointer.SetUint8(offset, value)
 }
 
-func (s *Bytes) AppendUInt8(value uint8) {
-	s.Pointer.SetUInt8(s.ensureAppend(1), value)
+func (s *Bytes) AppendUint8(value uint8) {
+	s.Pointer.SetUint8(s.ensureAppend(1), value)
 }
 
-func (s *Bytes) AppendUInt8String(value uint8) {
-	s.appendUInt(3, uint64(value), 10)
+func (s *Bytes) AppendUint8String(value uint8) {
+	s.appendUint(3, uint64(value), 10)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -570,61 +570,61 @@ func (s *Bytes) AppendInt16BE(value int16) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt16 Native Endian
+// Uint16 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt16(offset int) uint16 {
+func (s *Bytes) Uint16(offset int) uint16 {
 	s.EnsureLen(offset + 2)
-	return s.Pointer.UInt16(offset)
+	return s.Pointer.Uint16(offset)
 }
 
-func (s *Bytes) SetUInt16(offset int, value uint16) {
+func (s *Bytes) SetUint16(offset int, value uint16) {
 	s.EnsureLen(offset + 2)
-	s.Pointer.SetUInt16(offset, value)
+	s.Pointer.SetUint16(offset, value)
 }
 
-func (s *Bytes) AppendUInt16(value uint16) {
-	s.Pointer.SetUInt16(s.ensureAppend(2), value)
+func (s *Bytes) AppendUint16(value uint16) {
+	s.Pointer.SetUint16(s.ensureAppend(2), value)
 }
 
-func (s *Bytes) AppendUInt16String(value uint16) {
-	s.appendUInt(5, uint64(value), 10)
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////
-// UInt16 Little Endian
-///////////////////////////////////////////////////////////////////////////////////////////
-
-func (s *Bytes) UInt16LE(offset int) uint16 {
-	s.EnsureLen(offset + 2)
-	return s.Pointer.UInt16LE(offset)
-}
-
-func (s *Bytes) SetUInt16LE(offset int, value uint16) {
-	s.EnsureLen(offset + 2)
-	s.Pointer.SetUInt16LE(offset, value)
-}
-
-func (s *Bytes) AppendUInt16LE(value uint16) {
-	s.Pointer.SetUInt16LE(s.ensureAppend(2), value)
+func (s *Bytes) AppendUint16String(value uint16) {
+	s.appendUint(5, uint64(value), 10)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt16 Big Endian
+// Uint16 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt16BE(offset int) uint16 {
+func (s *Bytes) Uint16LE(offset int) uint16 {
 	s.EnsureLen(offset + 2)
-	return s.Pointer.UInt16BE(offset)
+	return s.Pointer.Uint16LE(offset)
 }
 
-func (s *Bytes) SetUInt16BE(offset int, value uint16) {
+func (s *Bytes) SetUint16LE(offset int, value uint16) {
 	s.EnsureLen(offset + 2)
-	s.Pointer.SetUInt16BE(offset, value)
+	s.Pointer.SetUint16LE(offset, value)
 }
 
-func (s *Bytes) AppendUInt16BE(value uint16) {
-	s.Pointer.SetUInt16BE(s.ensureAppend(2), value)
+func (s *Bytes) AppendUint16LE(value uint16) {
+	s.Pointer.SetUint16LE(s.ensureAppend(2), value)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Uint16 Big Endian
+///////////////////////////////////////////////////////////////////////////////////////////
+
+func (s *Bytes) Uint16BE(offset int) uint16 {
+	s.EnsureLen(offset + 2)
+	return s.Pointer.Uint16BE(offset)
+}
+
+func (s *Bytes) SetUint16BE(offset int, value uint16) {
+	s.EnsureLen(offset + 2)
+	s.Pointer.SetUint16BE(offset, value)
+}
+
+func (s *Bytes) AppendUint16BE(value uint16) {
+	s.Pointer.SetUint16BE(s.ensureAppend(2), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -686,61 +686,61 @@ func (s *Bytes) AppendInt32BE(value int32) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt32 Native Endian
+// Uint32 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt32(offset int) uint32 {
+func (s *Bytes) Uint32(offset int) uint32 {
 	s.EnsureLen(offset + 4)
-	return s.Pointer.UInt32(offset)
+	return s.Pointer.Uint32(offset)
 }
 
-func (s *Bytes) SetUInt32(offset int, value uint32) {
+func (s *Bytes) SetUint32(offset int, value uint32) {
 	s.EnsureLen(offset + 4)
-	s.Pointer.SetUInt32(offset, value)
+	s.Pointer.SetUint32(offset, value)
 }
 
-func (s *Bytes) AppendUInt32(value uint32) {
-	s.Pointer.SetUInt32(s.ensureAppend(4), value)
+func (s *Bytes) AppendUint32(value uint32) {
+	s.Pointer.SetUint32(s.ensureAppend(4), value)
 }
 
-func (s *Bytes) AppendUInt32String(value uint32) {
-	s.appendUInt(10, uint64(value), 10)
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////
-// UInt32 Little Endian
-///////////////////////////////////////////////////////////////////////////////////////////
-
-func (s *Bytes) UInt32LE(offset int) uint32 {
-	s.EnsureLen(offset + 4)
-	return s.Pointer.UInt32LE(offset)
-}
-
-func (s *Bytes) SetUInt32LE(offset int, value uint32) {
-	s.EnsureLen(offset + 4)
-	s.Pointer.SetUInt32LE(offset, value)
-}
-
-func (s *Bytes) AppendUInt32LE(value uint32) {
-	s.Pointer.SetUInt32LE(s.ensureAppend(4), value)
+func (s *Bytes) AppendUint32String(value uint32) {
+	s.appendUint(10, uint64(value), 10)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt32 Big Endian
+// Uint32 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt32BE(offset int) uint32 {
+func (s *Bytes) Uint32LE(offset int) uint32 {
 	s.EnsureLen(offset + 4)
-	return s.Pointer.UInt32BE(offset)
+	return s.Pointer.Uint32LE(offset)
 }
 
-func (s *Bytes) SetUInt32BE(offset int, value uint32) {
+func (s *Bytes) SetUint32LE(offset int, value uint32) {
 	s.EnsureLen(offset + 4)
-	s.Pointer.SetUInt32BE(offset, value)
+	s.Pointer.SetUint32LE(offset, value)
 }
 
-func (s *Bytes) AppendUInt32BE(value uint32) {
-	s.Pointer.SetUInt32BE(s.ensureAppend(4), value)
+func (s *Bytes) AppendUint32LE(value uint32) {
+	s.Pointer.SetUint32LE(s.ensureAppend(4), value)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Uint32 Big Endian
+///////////////////////////////////////////////////////////////////////////////////////////
+
+func (s *Bytes) Uint32BE(offset int) uint32 {
+	s.EnsureLen(offset + 4)
+	return s.Pointer.Uint32BE(offset)
+}
+
+func (s *Bytes) SetUint32BE(offset int, value uint32) {
+	s.EnsureLen(offset + 4)
+	s.Pointer.SetUint32BE(offset, value)
+}
+
+func (s *Bytes) AppendUint32BE(value uint32) {
+	s.Pointer.SetUint32BE(s.ensureAppend(4), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -802,61 +802,61 @@ func (s *Bytes) AppendInt64BE(value int64) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt64 Native Endian
+// Uint64 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt64(offset int) uint64 {
+func (s *Bytes) Uint64(offset int) uint64 {
 	s.EnsureLen(offset + 8)
-	return s.Pointer.UInt64(offset)
+	return s.Pointer.Uint64(offset)
 }
 
-func (s *Bytes) SetUInt64(offset int, value uint64) {
+func (s *Bytes) SetUint64(offset int, value uint64) {
 	s.EnsureLen(offset + 8)
-	s.Pointer.SetUInt64(offset, value)
+	s.Pointer.SetUint64(offset, value)
 }
 
-func (s *Bytes) AppendUInt64(value uint64) {
-	s.Pointer.SetUInt64(s.ensureAppend(8), value)
+func (s *Bytes) AppendUint64(value uint64) {
+	s.Pointer.SetUint64(s.ensureAppend(8), value)
 }
 
-func (s *Bytes) AppendUInt64String(value uint64) {
-	s.appendUInt(20, value, 10)
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////
-// UInt64 Little Endian
-///////////////////////////////////////////////////////////////////////////////////////////
-
-func (s *Bytes) UInt64LE(offset int) uint64 {
-	s.EnsureLen(offset + 8)
-	return s.Pointer.UInt64LE(offset)
-}
-
-func (s *Bytes) SetUInt64LE(offset int, value uint64) {
-	s.EnsureLen(offset + 8)
-	s.Pointer.SetUInt64LE(offset, value)
-}
-
-func (s *Bytes) AppendUInt64LE(value uint64) {
-	s.Pointer.SetUInt64LE(s.ensureAppend(8), value)
+func (s *Bytes) AppendUint64String(value uint64) {
+	s.appendUint(20, value, 10)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt64 Big Endian
+// Uint64 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt64BE(offset int) uint64 {
+func (s *Bytes) Uint64LE(offset int) uint64 {
 	s.EnsureLen(offset + 8)
-	return s.Pointer.UInt64BE(offset)
+	return s.Pointer.Uint64LE(offset)
 }
 
-func (s *Bytes) SetUInt64BE(offset int, value uint64) {
+func (s *Bytes) SetUint64LE(offset int, value uint64) {
 	s.EnsureLen(offset + 8)
-	s.Pointer.SetUInt64BE(offset, value)
+	s.Pointer.SetUint64LE(offset, value)
 }
 
-func (s *Bytes) AppendUInt64BE(value uint64) {
-	s.Pointer.SetUInt64BE(s.ensureAppend(8), value)
+func (s *Bytes) AppendUint64LE(value uint64) {
+	s.Pointer.SetUint64LE(s.ensureAppend(8), value)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Uint64 Big Endian
+///////////////////////////////////////////////////////////////////////////////////////////
+
+func (s *Bytes) Uint64BE(offset int) uint64 {
+	s.EnsureLen(offset + 8)
+	return s.Pointer.Uint64BE(offset)
+}
+
+func (s *Bytes) SetUint64BE(offset int, value uint64) {
+	s.EnsureLen(offset + 8)
+	s.Pointer.SetUint64BE(offset, value)
+}
+
+func (s *Bytes) AppendUint64BE(value uint64) {
+	s.Pointer.SetUint64BE(s.ensureAppend(8), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1073,57 +1073,57 @@ func (s *Bytes) AppendInt24BE(value int32) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt24 Native Endian
+// Uint24 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt24(offset int) uint32 {
+func (s *Bytes) Uint24(offset int) uint32 {
 	s.EnsureLen(offset + 3)
-	return s.Pointer.UInt24(offset)
+	return s.Pointer.Uint24(offset)
 }
 
-func (s *Bytes) SetUInt24(offset int, value uint32) {
+func (s *Bytes) SetUint24(offset int, value uint32) {
 	s.EnsureLen(offset + 3)
-	s.Pointer.SetUInt24(offset, value)
+	s.Pointer.SetUint24(offset, value)
 }
 
-func (s *Bytes) AppendUInt24(value uint32) {
-	s.Pointer.SetUInt24(s.ensureAppend(3), value)
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////
-// UInt24 Little Endian
-///////////////////////////////////////////////////////////////////////////////////////////
-
-func (s *Bytes) UInt24LE(offset int) uint32 {
-	s.EnsureLen(offset + 3)
-	return s.Pointer.UInt24LE(offset)
-}
-
-func (s *Bytes) SetUInt24LE(offset int, value uint32) {
-	s.EnsureLen(offset + 3)
-	s.Pointer.SetUInt24LE(offset, value)
-}
-
-func (s *Bytes) AppendUInt24LE(value uint32) {
-	s.Pointer.SetUInt24LE(s.ensureAppend(3), value)
+func (s *Bytes) AppendUint24(value uint32) {
+	s.Pointer.SetUint24(s.ensureAppend(3), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt24 Big Endian
+// Uint24 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt24BE(offset int) uint32 {
+func (s *Bytes) Uint24LE(offset int) uint32 {
 	s.EnsureLen(offset + 3)
-	return s.Pointer.UInt24BE(offset)
+	return s.Pointer.Uint24LE(offset)
 }
 
-func (s *Bytes) SetUInt24BE(offset int, value uint32) {
+func (s *Bytes) SetUint24LE(offset int, value uint32) {
 	s.EnsureLen(offset + 3)
-	s.Pointer.SetUInt24BE(offset, value)
+	s.Pointer.SetUint24LE(offset, value)
 }
 
-func (s *Bytes) AppendUInt24BE(value uint32) {
-	s.Pointer.SetUInt24BE(s.ensureAppend(3), value)
+func (s *Bytes) AppendUint24LE(value uint32) {
+	s.Pointer.SetUint24LE(s.ensureAppend(3), value)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Uint24 Big Endian
+///////////////////////////////////////////////////////////////////////////////////////////
+
+func (s *Bytes) Uint24BE(offset int) uint32 {
+	s.EnsureLen(offset + 3)
+	return s.Pointer.Uint24BE(offset)
+}
+
+func (s *Bytes) SetUint24BE(offset int, value uint32) {
+	s.EnsureLen(offset + 3)
+	s.Pointer.SetUint24BE(offset, value)
+}
+
+func (s *Bytes) AppendUint24BE(value uint32) {
+	s.Pointer.SetUint24BE(s.ensureAppend(3), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1181,57 +1181,57 @@ func (s *Bytes) AppendInt40BE(value int64) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt40 Native Endian
+// Uint40 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt40(offset int) uint64 {
+func (s *Bytes) Uint40(offset int) uint64 {
 	s.EnsureLen(offset + 5)
-	return s.Pointer.UInt40(offset)
+	return s.Pointer.Uint40(offset)
 }
 
-func (s *Bytes) SetUInt40(offset int, value uint64) {
+func (s *Bytes) SetUint40(offset int, value uint64) {
 	s.EnsureLen(offset + 5)
-	s.Pointer.SetUInt40(offset, value)
+	s.Pointer.SetUint40(offset, value)
 }
 
-func (s *Bytes) AppendUInt40(value uint64) {
-	s.Pointer.SetUInt40(s.ensureAppend(5), value)
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////
-// UInt40 Little Endian
-///////////////////////////////////////////////////////////////////////////////////////////
-
-func (s *Bytes) UInt40LE(offset int) uint64 {
-	s.EnsureLen(offset + 5)
-	return s.Pointer.UInt40LE(offset)
-}
-
-func (s *Bytes) SetUInt40LE(offset int, value uint64) {
-	s.EnsureLen(offset + 5)
-	s.Pointer.SetUInt40LE(offset, value)
-}
-
-func (s *Bytes) AppendUInt40LE(value uint64) {
-	s.Pointer.SetUInt40LE(s.ensureAppend(5), value)
+func (s *Bytes) AppendUint40(value uint64) {
+	s.Pointer.SetUint40(s.ensureAppend(5), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt40 Big Endian
+// Uint40 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt40BE(offset int) uint64 {
+func (s *Bytes) Uint40LE(offset int) uint64 {
 	s.EnsureLen(offset + 5)
-	return s.Pointer.UInt40BE(offset)
+	return s.Pointer.Uint40LE(offset)
 }
 
-func (s *Bytes) SetUInt40BE(offset int, value uint64) {
+func (s *Bytes) SetUint40LE(offset int, value uint64) {
 	s.EnsureLen(offset + 5)
-	s.Pointer.SetUInt40BE(offset, value)
+	s.Pointer.SetUint40LE(offset, value)
 }
 
-func (s *Bytes) AppendUInt40BE(value uint64) {
-	s.Pointer.SetUInt40BE(s.ensureAppend(5), value)
+func (s *Bytes) AppendUint40LE(value uint64) {
+	s.Pointer.SetUint40LE(s.ensureAppend(5), value)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Uint40 Big Endian
+///////////////////////////////////////////////////////////////////////////////////////////
+
+func (s *Bytes) Uint40BE(offset int) uint64 {
+	s.EnsureLen(offset + 5)
+	return s.Pointer.Uint40BE(offset)
+}
+
+func (s *Bytes) SetUint40BE(offset int, value uint64) {
+	s.EnsureLen(offset + 5)
+	s.Pointer.SetUint40BE(offset, value)
+}
+
+func (s *Bytes) AppendUint40BE(value uint64) {
+	s.Pointer.SetUint40BE(s.ensureAppend(5), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1289,57 +1289,57 @@ func (s *Bytes) AppendInt48BE(value int64) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt48 Native Endian
+// Uint48 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt48(offset int) uint64 {
+func (s *Bytes) Uint48(offset int) uint64 {
 	s.EnsureLen(offset + 6)
-	return s.Pointer.UInt48(offset)
+	return s.Pointer.Uint48(offset)
 }
 
-func (s *Bytes) SetUInt48(offset int, value uint64) {
+func (s *Bytes) SetUint48(offset int, value uint64) {
 	s.EnsureLen(offset + 6)
-	s.Pointer.SetUInt48(offset, value)
+	s.Pointer.SetUint48(offset, value)
 }
 
-func (s *Bytes) AppendUInt48(value uint64) {
-	s.Pointer.SetUInt48(s.ensureAppend(6), value)
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////
-// UInt48 Little Endian
-///////////////////////////////////////////////////////////////////////////////////////////
-
-func (s *Bytes) UInt48LE(offset int) uint64 {
-	s.EnsureLen(offset + 6)
-	return s.Pointer.UInt48LE(offset)
-}
-
-func (s *Bytes) SetUInt48LE(offset int, value uint64) {
-	s.EnsureLen(offset + 6)
-	s.Pointer.SetUInt48LE(offset, value)
-}
-
-func (s *Bytes) AppendUInt48LE(value uint64) {
-	s.Pointer.SetUInt48LE(s.ensureAppend(6), value)
+func (s *Bytes) AppendUint48(value uint64) {
+	s.Pointer.SetUint48(s.ensureAppend(6), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt48 Big Endian
+// Uint48 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt48BE(offset int) uint64 {
+func (s *Bytes) Uint48LE(offset int) uint64 {
 	s.EnsureLen(offset + 6)
-	return s.Pointer.UInt48BE(offset)
+	return s.Pointer.Uint48LE(offset)
 }
 
-func (s *Bytes) SetUInt48BE(offset int, value uint64) {
+func (s *Bytes) SetUint48LE(offset int, value uint64) {
 	s.EnsureLen(offset + 6)
-	s.Pointer.SetUInt48BE(offset, value)
+	s.Pointer.SetUint48LE(offset, value)
 }
 
-func (s *Bytes) AppendUInt48BE(value uint64) {
-	s.Pointer.SetUInt48BE(s.ensureAppend(6), value)
+func (s *Bytes) AppendUint48LE(value uint64) {
+	s.Pointer.SetUint48LE(s.ensureAppend(6), value)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Uint48 Big Endian
+///////////////////////////////////////////////////////////////////////////////////////////
+
+func (s *Bytes) Uint48BE(offset int) uint64 {
+	s.EnsureLen(offset + 6)
+	return s.Pointer.Uint48BE(offset)
+}
+
+func (s *Bytes) SetUint48BE(offset int, value uint64) {
+	s.EnsureLen(offset + 6)
+	s.Pointer.SetUint48BE(offset, value)
+}
+
+func (s *Bytes) AppendUint48BE(value uint64) {
+	s.Pointer.SetUint48BE(s.ensureAppend(6), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1397,57 +1397,57 @@ func (s *Bytes) AppendInt56BE(value int64) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt56 Native Endian
+// Uint56 Native Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt56(offset int) uint64 {
+func (s *Bytes) Uint56(offset int) uint64 {
 	s.EnsureLen(offset + 7)
-	return s.Pointer.UInt56(offset)
+	return s.Pointer.Uint56(offset)
 }
 
-func (s *Bytes) SetUInt56(offset int, value uint64) {
+func (s *Bytes) SetUint56(offset int, value uint64) {
 	s.EnsureLen(offset + 7)
-	s.Pointer.SetUInt56(offset, value)
+	s.Pointer.SetUint56(offset, value)
 }
 
-func (s *Bytes) AppendUInt56(value uint64) {
-	s.Pointer.SetUInt56(s.ensureAppend(7), value)
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////
-// UInt56 Little Endian
-///////////////////////////////////////////////////////////////////////////////////////////
-
-func (s *Bytes) UInt56LE(offset int) uint64 {
-	s.EnsureLen(offset + 7)
-	return s.Pointer.UInt56LE(offset)
-}
-
-func (s *Bytes) SetUInt56LE(offset int, value uint64) {
-	s.EnsureLen(offset + 7)
-	s.Pointer.SetUInt56LE(offset, value)
-}
-
-func (s *Bytes) AppendUInt56LE(value uint64) {
-	s.Pointer.SetUInt56LE(s.ensureAppend(7), value)
+func (s *Bytes) AppendUint56(value uint64) {
+	s.Pointer.SetUint56(s.ensureAppend(7), value)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// UInt56 Big Endian
+// Uint56 Little Endian
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-func (s *Bytes) UInt56BE(offset int) uint64 {
+func (s *Bytes) Uint56LE(offset int) uint64 {
 	s.EnsureLen(offset + 7)
-	return s.Pointer.UInt56BE(offset)
+	return s.Pointer.Uint56LE(offset)
 }
 
-func (s *Bytes) SetUInt56BE(offset int, value uint64) {
+func (s *Bytes) SetUint56LE(offset int, value uint64) {
 	s.EnsureLen(offset + 7)
-	s.Pointer.SetUInt56BE(offset, value)
+	s.Pointer.SetUint56LE(offset, value)
 }
 
-func (s *Bytes) AppendUInt56BE(value uint64) {
-	s.Pointer.SetUInt56BE(s.ensureAppend(7), value)
+func (s *Bytes) AppendUint56LE(value uint64) {
+	s.Pointer.SetUint56LE(s.ensureAppend(7), value)
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Uint56 Big Endian
+///////////////////////////////////////////////////////////////////////////////////////////
+
+func (s *Bytes) Uint56BE(offset int) uint64 {
+	s.EnsureLen(offset + 7)
+	return s.Pointer.Uint56BE(offset)
+}
+
+func (s *Bytes) SetUint56BE(offset int, value uint64) {
+	s.EnsureLen(offset + 7)
+	s.Pointer.SetUint56BE(offset, value)
+}
+
+func (s *Bytes) AppendUint56BE(value uint64) {
+	s.Pointer.SetUint56BE(s.ensureAppend(7), value)
 }
 
 func (s *Bytes) Hash32() uint32 {
